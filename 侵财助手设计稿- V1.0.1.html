@@ -1,0 +1,3277 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>侵财助手设计稿</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // 趋势图（可视化看板为设计稿图时无 canvas，跳过）
+      const trendEl = document.getElementById('trendChart');
+      if (!trendEl) return;
+      const trendCtx = trendEl.getContext('2d');
+      new Chart(trendCtx, {
+        type: 'line',
+        data: {
+          labels: ['3/19', '3/20', '3/21', '3/22', '3/23', '3/24', '3/25'],
+          datasets: [{
+            label: '刑事类',
+            data: [142, 156, 168, 159, 172, 165, 173],
+            borderColor: '#1677ff',
+            backgroundColor: 'rgba(22, 119, 255, 0.1)',
+            tension: 0.3
+          }, {
+            label: '行政类',
+            data: [68, 72, 80, 75, 82, 78, 75],
+            borderColor: '#13c2c2',
+            backgroundColor: 'rgba(19, 194, 194, 0.1)',
+            tension: 0.3
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: 'top',
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
+
+      // 警情子类分布
+      const typeCtx = document.getElementById('typeChart').getContext('2d');
+      new Chart(typeCtx, {
+        type: 'pie',
+        data: {
+          labels: ['盗窃非机动车', '盗窃商户', '入户盗窃', '盗窃车内财物', '其他'],
+          datasets: [{
+            data: [35, 25, 20, 15, 5],
+            backgroundColor: [
+              '#1677ff',
+              '#13c2c2',
+              '#52c41a',
+              '#faad14',
+              '#722ed1'
+            ]
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: 'bottom'
+            }
+          }
+        }
+      });
+
+      // 地市警情排名
+      const cityCtx = document.getElementById('cityChart').getContext('2d');
+      new Chart(cityCtx, {
+        type: 'bar',
+        data: {
+          labels: ['合肥', '阜阳', '芜湖', '安庆', '蚌埠', '六安', '宿州', '滁州', '马鞍山', '宣城'],
+          datasets: [{
+            label: '警情数量',
+            data: [324, 287, 215, 198, 176, 162, 145, 138, 125, 118],
+            backgroundColor: '#1677ff'
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              display: false
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
+
+      // 作案时段分布
+      const hourCtx = document.getElementById('hourChart').getContext('2d');
+      new Chart(hourCtx, {
+        type: 'bar',
+        data: {
+          labels: ['0时', '4时', '8时', '12时', '16时', '20时'],
+          datasets: [{
+            label: '作案次数',
+            data: [45, 28, 35, 42, 56, 68],
+            backgroundColor: '#722ed1'
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              display: false
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
+
+      // 安徽地图城市点
+      const mapEl = document.getElementById('anhuiMap');
+      const cities = [
+        { name: '合肥', x: 50, y: 45, value: 324 },
+        { name: '阜阳', x: 35, y: 35, value: 287 },
+        { name: '芜湖', x: 65, y: 55, value: 215 },
+        { name: '安庆', x: 55, y: 70, value: 198 },
+        { name: '蚌埠', x: 45, y: 40, value: 176 },
+        { name: '六安', x: 45, y: 55, value: 162 },
+        { name: '宿州', x: 30, y: 30, value: 145 },
+        { name: '滁州', x: 55, y: 40, value: 138 },
+        { name: '马鞍山', x: 70, y: 60, value: 125 },
+        { name: '宣城', x: 60, y: 65, value: 118 }
+      ];
+
+      cities.forEach(city => {
+        const dot = document.createElement('div');
+        dot.className = 'city-dot';
+        dot.style.left = city.x + '%';
+        dot.style.top = city.y + '%';
+        dot.style.width = (city.value / 10) + 'px';
+        dot.style.height = (city.value / 10) + 'px';
+        dot.innerHTML = '<span>' + city.name + '</span>';
+        mapEl.appendChild(dot);
+      });
+    });
+  </script>
+  <style>
+    :root {
+      --primary: #1677ff;
+      --primary-light: #e6f4ff;
+      --primary-dark: #0958d9;
+      --success: #52c41a;
+      --warning: #faad14;
+      --error: #ff4d4f;
+      --card: #fff;
+      --text: #1f1f1f;
+      --text-secondary: #595959;
+      --text-disabled: #bfbfbf;
+      --border: #f0f0f0;
+      --bg-layout: #f5f5f5;
+      --bg-container: #ffffff;
+      --shadow: 0 1px 2px 0 rgba(0,0,0,0.03), 0 1px 6px -1px rgba(0,0,0,0.02), 0 2px 4px 0 rgba(0,0,0,0.02);
+      --shadow-secondary: 0 3px 6px -4px rgba(0,0,0,0.12), 0 6px 16px 0 rgba(0,0,0,0.08), 0 9px 28px 8px rgba(0,0,0,0.05);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+      font-size: 14px;
+      line-height: 1.5715;
+      color: var(--text);
+      background: var(--bg-layout);
+      overflow: hidden;
+    }
+
+    .app { display: flex; height: 100%; }
+
+    /* Sidebar */
+    .sidebar {
+      width: 200px;
+      background: #001529;
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      transition: width 0.2s;
+    }
+
+    .logo {
+      height: 64px;
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      gap: 12px;
+      background: #002140;
+    }
+
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #1677ff 0%, #69b1ff 100%);
+      color: #fff;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .logo-text {
+      font-size: 18px;
+      font-weight: 600;
+      color: #fff;
+      letter-spacing: 1px;
+    }
+
+    .nav { padding: 8px 0; flex: 1; }
+    .nav-item {
+      height: 40px;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: rgba(255,255,255,0.65);
+      border-radius: 0;
+      cursor: pointer;
+      transition: all 0.15s;
+      margin: 4px 0;
+    }
+    .nav-item:hover { color: #fff; background: rgba(255,255,255,0.08); }
+    .nav-item.active {
+      color: #fff;
+      background: #1677ff;
+    }
+    .nav-item svg { width: 16px; height: 16px; opacity: 0.85; }
+    .nav-item.active svg { opacity: 1; }
+
+    /* Main Content */
+    .main { flex: 1; display: flex; flex-direction: column; min-width: 0; height: 100%; }
+
+    .topbar {
+      height: 64px;
+      background: var(--bg-container);
+      borderBottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      flex-shrink: 0;
+      box-shadow: 0 1px 4px rgba(0,21,41,0.08);
+      z-index: 10;
+    }
+
+    .top-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text);
+      font-size: 14px;
+    }
+    .top-left span { color: var(--text-secondary); }
+    .top-left strong { color: var(--text); font-weight: 500; }
+
+    .top-right { display: flex; align-items: center; gap: 16px; position: relative; }
+    .icon-btn { width: 20px; height: 20px; color: var(--text-secondary); cursor: pointer; transition: color 0.2s; }
+    .icon-btn:hover { color: var(--primary); }
+    
+    .user {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 8px;
+      transition: background 0.2s;
+    }
+    .user:hover { background: #f5f5f5; }
+    .avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: #1677ff; color: #fff; 
+      display: flex; align-items: center; justify-content: center; 
+      font-weight: 500; font-size: 14px;
+    }
+
+    .user-menu {
+      position: absolute;
+      right: 0;
+      top: 48px;
+      width: 160px;
+      background: var(--bg-container);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: var(--shadow-secondary);
+      padding: 4px;
+      display: none;
+      z-index: 100;
+    }
+    .user-menu.show { display: block; }
+    .menu-item {
+      height: 36px;
+      border-radius: 4px;
+      padding: 0 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text);
+      cursor: pointer;
+      font-size: 13px;
+      transition: background 0.15s;
+    }
+    .menu-item:hover { background: #f5f5f5; }
+    .menu-item.danger { color: var(--error); }
+    .menu-divider { height: 1px; background: var(--border); margin: 4px 0; }
+
+    /* Content Area */
+    .content { 
+      flex: 1; 
+      padding: 16px 24px 24px; 
+      overflow: auto; 
+      display: flex;
+      flex-direction: column;
+    }
+
+    .page { display: none; flex: 1; flex-direction: column; }
+    .page.active { display: flex; }
+
+    /* 可视化看板：抵消 content 内边距，主区域横向铺满 */
+    #page-dashboard.page {
+      margin: -16px -24px -24px;
+      width: calc(100% + 48px);
+      max-width: none;
+      flex: 1;
+      min-height: 0;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--bg-container);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    /* Toolbar */
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-container);
+      border-radius: 8px 8px 0 0;
+    }
+
+    /* Form Elements */
+    .inp, .sel {
+      height: 32px;
+      border: 1px solid #d9d9d9;
+      border-radius: 6px;
+      padding: 4px 11px;
+      background: #fff;
+      color: var(--text);
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+    .inp:hover, .sel:hover { border-color: #40a9ff; }
+    .inp:focus, .sel:focus {
+      outline: none;
+      border-color: #1677ff;
+      box-shadow: 0 0 0 2px rgba(22,119,255,0.2);
+    }
+
+    /* Buttons */
+    .btn {
+      height: 32px;
+      padding: 4px 15px;
+      border: 1px solid #d9d9d9;
+      background: #fff;
+      border-radius: 6px;
+      color: var(--text);
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .btn:hover {
+      color: #1677ff;
+      border-color: #1677ff;
+    }
+    .btn.primary {
+      background: #1677ff;
+      color: #fff;
+      border: none;
+    }
+    .btn.primary:hover {
+      background: #4096ff;
+    }
+
+    /* Tables */
+    .table-wrap { 
+      overflow: auto; 
+      flex: 1;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { 
+      padding: 12px 16px; 
+      font-size: 14px; 
+      text-align: left; 
+      border-bottom: 1px solid var(--border);
+    }
+    th { 
+      background: #fafafa; 
+      color: var(--text); 
+      font-weight: 500;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+    tr:hover td { background: #fafafa; }
+
+    /* Tags */
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+      border-radius: 4px;
+      padding: 1px 7px;
+      border: 1px solid transparent;
+      line-height: 1.67;
+    }
+    .tag .dot { width: 6px; height: 6px; border-radius: 50%; }
+    .tag.blue { color: #0958d9; background: #e6f4ff; border-color: #91caff; }
+    .tag.green { color: #389e0d; background: #f6ffed; border-color: #b7eb8f; }
+    .tag.orange { color: #d46b08; background: #fff7e6; border-color: #ffd591; }
+    .tag.red { color: #d9363e; background: #fff1f0; border-color: #ffa39e; }
+    .tag.purple { color: #531dab; background: #f9f0ff; border-color: #d3adf7; }
+
+    /* Links */
+    .link { color: #1677ff; cursor: pointer; transition: color 0.2s; }
+    .link:hover { color: #4096ff; }
+    .link.danger { color: var(--error); }
+    .link.danger:hover { color: #ff7875; }
+
+    /* Pagination */
+    .pagination {
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--text-secondary);
+      font-size: 13px;
+      background: var(--bg-container);
+      border-top: 1px solid var(--border);
+      border-radius: 0 0 8px 8px;
+    }
+    .pages { display: flex; gap: 4px; }
+    .page-num {
+      min-width: 28px; height: 28px; 
+      border: 1px solid #d9d9d9; 
+      border-radius: 4px; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      cursor: pointer;
+      background: #fff;
+      font-size: 13px;
+      transition: all 0.2s;
+    }
+    .page-num:hover { border-color: #1677ff; color: #1677ff; }
+    .page-num.active { 
+      background: #1677ff; 
+      color: #fff; 
+      border-color: #1677ff; 
+    }
+
+    /* Dashboard Image */
+    .dashboard-image-container {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      background: #fff;
+      border-radius: 8px;
+    }
+    .dashboard-image {
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    /* Dashboard KPIs */
+    .kpis { 
+      display: grid; 
+      grid-template-columns: repeat(4, 1fr); 
+      gap: 16px; 
+      margin-bottom: 16px; 
+    }
+    .kpi {
+      padding: 20px 24px;
+      color: #fff;
+      border-radius: 8px;
+      position: relative;
+      overflow: hidden;
+    }
+    .kpi .label { font-size: 14px; opacity: 0.85; }
+    .kpi .val { margin-top: 12px; font-size: 32px; font-weight: 600; }
+    .kpi .delta { margin-top: 8px; font-size: 13px; font-weight: 500; }
+    .kpi:nth-child(1) { background: linear-gradient(135deg, #1677ff 0%, #69b1ff 100%); }
+    .kpi:nth-child(2) { background: linear-gradient(135deg, #722ed1 0%, #b37feb 100%); }
+    .kpi:nth-child(3) { background: linear-gradient(135deg, #13c2c2 0%, #36cfc9 100%); }
+    .kpi:nth-child(4) { background: linear-gradient(135deg, #52c41a 0%, #95de64 100%); }
+    .up { color: #ffccc7; }
+    .down { color: #d9f7be; }
+
+    /* Dashboard Grid */
+    .dash-grid { 
+      display: grid; 
+      grid-template-columns: 360px 1fr; 
+      gap: 16px; 
+      margin-bottom: 16px; 
+    }
+    .panel-head { 
+      padding: 16px 20px; 
+      border-bottom: 1px solid var(--border); 
+      font-weight: 500; 
+      font-size: 14px;
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+    }
+    .panel-body { padding: 16px 20px; }
+
+    .dashboard-left { display: grid; gap: 16px; }
+    .mini-kpis { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .mini-kpi { 
+      padding: 16px; 
+      background: #fafafa; 
+      border-radius: 8px; 
+      border: 1px solid var(--border);
+    }
+    .mini-kpi .label { font-size: 13px; color: var(--text-secondary); }
+    .mini-kpi .val { margin-top: 8px; font-size: 24px; font-weight: 600; }
+    .mini-kpi .delta { margin-top: 4px; font-size: 12px; }
+
+    /* Map */
+    .anhui-map {
+      position: relative;
+      height: 320px;
+      background: #f0f5ff;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .anhui-shape {
+      position: absolute;
+      inset: 20px 80px;
+      background: #d6e4ff;
+      clip-path: polygon(39% 3%, 53% 8%, 60% 19%, 76% 26%, 71% 39%, 79% 53%, 68% 68%, 58% 85%, 43% 96%, 30% 89%, 20% 74%, 13% 56%, 21% 40%, 18% 24%, 28% 14%);
+    }
+    .city-dot {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      background: #1677ff;
+      border: 2px solid #fff;
+      box-shadow: 0 2px 8px rgba(22,119,255,0.4);
+    }
+    .city-dot span {
+      position: absolute;
+      left: 14px;
+      top: -4px;
+      font-size: 12px;
+      color: var(--text);
+      white-space: nowrap;
+    }
+
+    /* Charts */
+    .chart-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .chart-card { min-height: 300px; }
+
+    /* Tabs */
+    .tabs { 
+      display: flex; 
+      gap: 0; 
+      border-bottom: 1px solid var(--border); 
+      padding: 0 16px; 
+      background: var(--bg-container);
+      border-radius: 8px 8px 0 0;
+    }
+    .tab {
+      padding: 12px 20px;
+      cursor: pointer;
+      color: var(--text-secondary);
+      border-bottom: 2px solid transparent;
+      font-size: 14px;
+      margin-bottom: -1px;
+      transition: all 0.2s;
+    }
+    .tab:hover { color: var(--primary); }
+    .tab.active { 
+      color: var(--primary); 
+      border-bottom-color: var(--primary); 
+      font-weight: 500;
+    }
+
+    .subpane { display: none; flex: 1; flex-direction: column; }
+    .subpane.active { display: flex; }
+
+    /* Drawer */
+    .drawer-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      display: none;
+      z-index: 100;
+    }
+    .drawer-overlay.show { display: block; }
+
+    .drawer {
+      position: fixed;
+      top: 0;
+      right: -720px;
+      width: 720px;
+      height: 100%;
+      background: var(--bg-container);
+      box-shadow: -6px 0 16px -8px rgba(0,0,0,0.08), -9px 0 28px 0 rgba(0,0,0,0.05), -12px 0 48px 16px rgba(0,0,0,0.03);
+      z-index: 101;
+      transition: right 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+      display: flex;
+      flex-direction: column;
+    }
+    .drawer.show { right: 0; }
+    .drawer-head {
+      height: 64px;
+      border-bottom: 1px solid var(--border);
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-weight: 500;
+      font-size: 16px;
+    }
+    .drawer-body { flex: 1; overflow: auto; padding: 20px; background: var(--bg-layout); }
+
+    /* Detail View */
+    .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .section-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 4px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #fff;
+      margin-bottom: 12px;
+    }
+    .section-tag.blue { background: #1677ff; }
+    .section-tag.purple { background: #722ed1; }
+    .section-tag.orange { background: #fa8c16; }
+
+    .detail-card { 
+      padding: 20px; 
+      background: var(--bg-container);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+    .detail-card h3 {
+      font-size: 15px;
+      font-weight: 500;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .kv { 
+      display: grid; 
+      grid-template-columns: 140px 1fr; 
+      gap: 8px; 
+      margin-bottom: 12px;
+      font-size: 14px;
+    }
+    .kv .k { color: var(--text-secondary); }
+    .kv .v { color: var(--text); }
+    .muted-box { 
+      background: #fafafa; 
+      border: 1px solid var(--border); 
+      border-radius: 6px; 
+      padding: 16px; 
+    }
+
+    .drawer-bottom-nav {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      color: var(--text-secondary);
+      font-size: 13px;
+    }
+    .drawer-bottom-nav span { cursor: pointer; }
+    .drawer-bottom-nav span:hover { color: var(--primary); }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      display: none;
+      z-index: 100;
+    }
+    .modal-overlay.show { display: block; }
+
+    .modal {
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 520px;
+      background: var(--bg-container);
+      border-radius: 8px;
+      box-shadow: var(--shadow-secondary);
+      z-index: 101;
+      display: none;
+    }
+    .modal.show { display: block; }
+    .modal.modal-wide {
+      width: min(920px, 94vw);
+      max-height: 85vh;
+    }
+    .modal.modal-wide .modal-body {
+      max-height: calc(85vh - 130px);
+      overflow-y: auto;
+    }
+    .report-doc { font-size: 14px; line-height: 1.8; color: var(--text); }
+    .report-doc h2 { font-size: 17px; font-weight: 600; margin: 20px 0 10px; color: var(--text); }
+    .report-doc h3 { font-size: 15px; font-weight: 600; margin: 16px 0 8px; color: var(--primary-dark); }
+    .report-doc .report-lead { color: var(--text-secondary); font-size: 13px; margin-bottom: 16px; }
+    .report-doc table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 10px 0 14px; }
+    .report-doc th, .report-doc td { border: 1px solid var(--border); padding: 8px 10px; text-align: left; vertical-align: top; }
+    .report-doc th { background: #fafafa; font-weight: 600; }
+    .report-doc ul { margin: 8px 0 8px 20px; }
+    .report-doc p { margin: 8px 0; text-align: justify; }
+    .modal-head {
+      height: 64px;
+      border-bottom: 1px solid var(--border);
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-weight: 500;
+      font-size: 16px;
+    }
+    .modal-body { padding: 20px; }
+    .modal-foot { 
+      padding: 16px 20px; 
+      border-top: 1px solid var(--border); 
+      display: flex; 
+      justify-content: flex-end; 
+      gap: 8px; 
+      background: #fafafa;
+      border-radius: 0 0 8px 8px;
+    }
+    .form-row { margin-bottom: 16px; }
+    .form-row label { 
+      display: block; 
+      font-size: 14px; 
+      color: var(--text); 
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+    .form-row textarea { 
+      width: 100%; 
+      min-height: 100px; 
+      border: 1px solid #d9d9d9; 
+      border-radius: 6px; 
+      padding: 8px 11px; 
+      resize: vertical;
+      font-family: inherit;
+      font-size: 14px;
+    }
+
+    /* Permissions */
+    .perm-layout { display: grid; grid-template-columns: 240px 1fr; gap: 16px; height: 100%; }
+    .org-tree {
+      background: var(--bg-container);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      overflow-y: auto;
+    }
+    .org-item { 
+      padding: 8px 12px; 
+      border-radius: 4px; 
+      font-size: 14px; 
+      cursor: pointer; 
+      position: relative;
+      transition: background 0.15s;
+    }
+    .org-item:hover { background: #f5f5f5; }
+    .org-actions { 
+      display: none; 
+      position: absolute; 
+      right: 12px; 
+      top: 8px; 
+      font-size: 13px; 
+      color: #1677ff; 
+      gap: 12px; 
+    }
+    .org-item:hover .org-actions { display: flex; }
+    .indent-1 { margin-left: 16px; }
+    .indent-2 { margin-left: 32px; }
+
+    /* Report */
+    .report-layout { display: grid; grid-template-columns: 1fr 320px; gap: 16px; }
+    .report-side { 
+      border-left: 1px solid var(--border);
+      padding-left: 16px;
+    }
+
+    .notice {
+      margin: 0 0 16px;
+      padding: 12px 16px;
+      background: #f6ffed;
+      border: 1px solid #b7eb8f;
+      border-radius: 8px;
+      color: #389e0d;
+      font-size: 14px;
+    }
+
+    /* Stats Table */
+    .stats-inner-tabs { flex-wrap: wrap; row-gap: 0; }
+    .stats-wrap { overflow: auto; flex: 1; }
+    .stats-table { min-width: 1200px; }
+    .stats-table.stats-wide { min-width: 2200px; }
+    .stats-table th, .stats-table td { 
+      text-align: center; 
+      padding: 10px 8px; 
+      font-size: 13px; 
+      white-space: nowrap;
+      border: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    .h-dark { background: #001529 !important; color: #fff !important; border-color: #001529 !important; }
+    .h-blue { background: #e6f4ff !important; color: #0958d9 !important; border-color: #91caff !important; }
+    .h-green { background: #f6ffed !important; color: #389e0d !important; border-color: #b7eb8f !important; }
+    .h-yellow { background: #fff7e6 !important; color: #d46b08 !important; border-color: #ffd591 !important; }
+    .h-pink { background: #fff0f6 !important; color: #c41d7f !important; border-color: #ffadd2 !important; }
+    .h-purple { background: #f9f0ff !important; color: #531dab !important; border-color: #d3adf7 !important; }
+    .h-orange { background: #fff7e6 !important; color: #d46b08 !important; border-color: #ffd591 !important; }
+    .total-row td { font-weight: 600; background: #fafafa; }
+
+    .w-full { width: 100%; }
+    .right { margin-left: auto; }
+    .case-stolen-check-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 14px;
+      align-items: center;
+    }
+    .case-stolen-check-grid label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--text);
+      user-select: none;
+    }
+    .case-stolen-check-grid input { accent-color: var(--primary); }
+
+    .ellipsis-3 {
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      line-height: 1.5715;
+      max-width: 400px;
+    }
+
+    @media (max-width: 1400px) {
+      .kpis { grid-template-columns: repeat(2, 1fr); }
+      .dash-grid { grid-template-columns: 1fr; }
+      .chart-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Dashboard Image */
+    .dashboard-image-wrap {
+      width: 100%;
+      padding: 24px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+    .dashboard-image-wrap img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+      box-shadow: var(--shadow-secondary);
+      background: #fff;
+    }
+    .dashboard-image-container {
+      width: 100%;
+      padding: 24px;
+      display: flex;
+      justify-content: center;
+    }
+    .dashboard-image-container img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+      box-shadow: var(--shadow-secondary);
+      background: #fff;
+    }
+
+    /* ===== Dashboard Light Theme ===== */
+    .dash-page {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 20px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+    }
+    /* 可视化看板：设计稿图铺满主内容宽度 */
+    .dash-page.dash-page--mockup {
+      padding: 0;
+      flex: 1;
+      min-height: 0;
+      background: var(--bg-layout);
+      border: none;
+      box-shadow: none;
+      align-items: stretch;
+      border-radius: 0;
+    }
+    .dash-mockup-img {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 0;
+      box-shadow: none;
+    }
+    .dash-kpis {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+    .dash-kpi {
+      padding: 20px 24px;
+      color: var(--text);
+      background: #f8fafc;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+    .dash-kpi .dk-label { font-size: 13px; color: var(--text-secondary); }
+    .dash-kpi .dk-val { margin-top: 12px; font-size: 32px; font-weight: 700; color: var(--primary); }
+    .dash-kpi .dk-delta { margin-top: 6px; font-size: 12px; color: var(--text-secondary); }
+    .dash-kpi:nth-child(1) { border-color: #e6f4ff; background: #f0f9ff; }
+    .dash-kpi:nth-child(1) .dk-val { color: #1677ff; }
+    .dash-kpi:nth-child(1) .dk-delta { color: #10b981; }
+    .dash-kpi:nth-child(2) { border-color: #fff7e6; background: #fffbeb; }
+    .dash-kpi:nth-child(2) .dk-val { color: #fa8c16; }
+    .dash-kpi:nth-child(2) .dk-delta { color: #52c41a; }
+    .dash-kpi:nth-child(3) { border-color: #f6ffed; background: #f0fdf4; }
+    .dash-kpi:nth-child(3) .dk-val { color: #13c2c2; }
+    .dash-kpi:nth-child(3) .dk-delta { color: #10b981; }
+    .dash-kpi:nth-child(4) { border-color: #f9f0ff; background: #fdf4ff; }
+    .dash-kpi:nth-child(4) .dk-val { color: #722ed1; }
+    .dash-kpi:nth-child(4) .dk-delta { color: #10b981; }
+    .dash-mid {
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 16px;
+    }
+    .dash-map-card {
+      background: #ffffff;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+    .dash-map-card .panel-head {
+      background: #f8fafc;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+    }
+    .dash-right-col { display: flex; flex-direction: column; gap: 16px; }
+    .dash-mini-kpis {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+    .dash-mini-kpi {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      text-align: center;
+      box-shadow: var(--shadow);
+    }
+    .dash-mini-kpi .dmk-label { font-size: 12px; color: var(--text-secondary); }
+    .dash-mini-kpi .dmk-val { font-size: 22px; font-weight: 700; color: var(--text); margin-top: 6px; }
+    .dash-mini-kpi .dmk-delta { font-size: 11px; margin-top: 4px; color: var(--text-secondary); }
+    .dash-chart-card {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      flex: 1;
+      box-shadow: var(--shadow);
+    }
+    .dash-chart-card .panel-head {
+      background: #f8fafc;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+    }
+    .dash-chart-card .panel-body { padding: 12px 16px; }
+    .dash-bottom {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+    }
+    .dash-bottom .dash-chart-card { flex: auto; }
+    .dash-map-dark {
+      position: relative;
+      height: 280px;
+      background: #f0f9ff;
+      border-radius: 0 0 10px 10px;
+    }
+    .dash-map-dark .anhui-shape {
+      background: #e6f4ff;
+    }
+    .dash-map-dark .city-dot {
+      background: #1677ff;
+      border-color: #ffffff;
+      box-shadow: 0 2px 8px rgba(22,119,255,0.4);
+    }
+    .dash-map-dark .city-dot span { color: var(--text); font-size: 11px; }
+
+    /* ===== Case Detail (Personnel Detail Page Style) ===== */
+    .case-hero {
+      background: var(--bg-container);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      padding: 20px 24px;
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+      margin-bottom: 16px;
+    }
+    .case-hero-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #722ed1, #b37feb);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      flex-shrink: 0;
+    }
+    .case-hero-info { flex: 1; }
+    .case-hero-name-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+    .case-hero-name { font-size: 18px; font-weight: 700; color: var(--text); }
+    .case-hero-id { font-size: 12px; color: var(--text-secondary); font-family: monospace; background: #f5f5f5; padding: 2px 8px; border-radius: 4px; }
+    .case-hero-meta { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 10px; }
+    .case-meta-item { display: flex; flex-direction: column; gap: 2px; }
+    .case-meta-label { font-size: 11px; color: var(--text-light); }
+    .case-meta-value { font-size: 13px; color: var(--text); font-weight: 500; }
+    .case-hero-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+    .case-hero-actions { display: flex; gap: 8px; flex-shrink: 0; }
+    .case-stats-row {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+    .case-stat-card {
+      background: var(--bg-container);
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      padding: 16px;
+      text-align: center;
+    }
+    .case-stat-num { font-size: 26px; font-weight: 700; line-height: 1.2; margin-bottom: 4px; }
+    .case-stat-label { font-size: 12px; color: var(--text-secondary); }
+    .case-stat-sub { font-size: 11px; color: var(--text-light); margin-top: 2px; }
+    .case-main-grid {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 16px;
+    }
+    .case-table-wrap {
+      background: var(--bg-container);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+    .case-table-wrap .panel-head {
+      border-bottom: 1px solid var(--border);
+    }
+    .ct { width: 100%; border-collapse: collapse; }
+    .ct th { background: #f8fafc; padding: 10px 14px; font-size: 12px; color: var(--text-secondary); font-weight: 600; text-align: left; border-bottom: 1px solid var(--border); }
+    .ct td { padding: 12px 14px; font-size: 12px; color: var(--text); border-bottom: 1px solid #f5f5f5; vertical-align: middle; }
+    .ct tr:last-child td { border-bottom: none; }
+    .ct tr:hover td { background: #fafbfd; }
+    .ct-name { font-size: 13px; font-weight: 500; margin-bottom: 2px; }
+    .ct-num { font-size: 11px; color: var(--text-light); font-family: monospace; }
+    .ct-meta { font-size: 11px; color: var(--text-light); }
+    .ct-amount { color: var(--error); font-weight: 600; }
+    .ct-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; margin-right: 4px; }
+    .case-ai-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .case-ai-card {
+      background: var(--bg-container);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+    .case-ai-card .panel-head {
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .case-ai-card .panel-head h3 { font-size: 14px; font-weight: 600; color: var(--text); flex: 1; }
+    .ai-feature-item {
+      padding: 10px 16px;
+      border-bottom: 1px solid #f9f9f9;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+    }
+    .ai-feature-item:last-child { border-bottom: none; }
+    .ai-feature-icon { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
+    .ai-feature-label { font-size: 11px; color: var(--text-light); margin-bottom: 2px; }
+    .ai-feature-value { font-size: 13px; color: var(--text); font-weight: 500; }
+    .case-field-row {
+      padding: 8px 16px;
+      border-bottom: 1px solid #f9f9f9;
+      display: flex;
+      gap: 12px;
+      font-size: 13px;
+    }
+    .case-field-row:last-child { border-bottom: none; }
+    .case-field-label { font-size: 12px; color: var(--text-secondary); width: 110px; flex-shrink: 0; }
+    .case-field-value { flex: 1; color: var(--text); word-break: break-all; }
+    .case-items-area { display: flex; flex-wrap: wrap; gap: 5px; padding: 12px 16px; }
+    .case-item-tag { padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; }
+    .cit-blue { background: #eff6ff; color: #2563eb; }
+    .cit-orange { background: #fff7ed; color: #d97706; }
+    .cit-red { background: #fef2f2; color: #dc2626; }
+    .cit-gray { background: #f5f5f5; color: #666; }
+    .cit-green { background: #ecfdf5; color: #059669; }
+    .cit-purple { background: #f5f3ff; color: #7c3aed; }
+    .cit-teal { background: #f0fdfa; color: #0f766e; }
+
+    /* ===== Personnel Detail (Police Detail Page Style) ===== */
+    .person-detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .pd-section-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 4px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #fff;
+      margin-bottom: 12px;
+    }
+    .pd-tag-blue { background: #1677ff; }
+    .pd-tag-purple { background: #722ed1; }
+    .pd-tag-orange { background: #fa8c16; }
+    .pd-card {
+      padding: 16px;
+      background: var(--bg-container);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+    .pd-card h3 {
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .pd-kv {
+      display: grid;
+      grid-template-columns: 130px 1fr;
+      gap: 6px;
+      margin-bottom: 10px;
+      font-size: 13px;
+    }
+    .pd-kv .pk { color: var(--text-secondary); }
+    .pd-kv .pv { color: var(--text); }
+    .pd-case-card {
+      background: #fafafa;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 14px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+    }
+    .pd-case-card:last-child { margin-bottom: 0; }
+    .pd-case-title { font-size: 15px; font-weight: 600; margin-top: 4px; }
+    .pd-case-meta { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+    .pd-case-right { text-align: right; flex-shrink: 0; }
+    .pd-case-status { font-size: 12px; font-weight: 500; margin-top: 8px; display: inline-block; }
+    @media (max-width: 1400px) {
+      .dash-kpis { grid-template-columns: repeat(2, 1fr); }
+      .dash-mid { grid-template-columns: 1fr; }
+      .dash-bottom { grid-template-columns: 1fr; }
+      .dash-mini-kpis { grid-template-columns: repeat(2, 1fr); }
+      .case-stats-row { grid-template-columns: repeat(3, 1fr); }
+      .case-main-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app" id="app">
+    <aside class="sidebar">
+      <div class="logo">
+        <div class="logo-icon">侵</div>
+        <div class="logo-text">侵财助手</div>
+      </div>
+      <nav class="nav">
+        <div class="nav-item active" data-page="police">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
+            <line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/>
+            <line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+          </svg>
+          警情列表
+        </div>
+        <div class="nav-item" data-page="cases">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 7h5l2 2h11v10a2 2 0 0 1-2 2H3z"/>
+          </svg>
+          案件列表
+        </div>
+        <div class="nav-item" data-page="personnel">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="7" r="4"/><path d="M5.5 21a6.5 6.5 0 0 1 13 0"/>
+          </svg>
+          人员列表
+        </div>
+        <div class="nav-item" data-page="reports">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+          </svg>
+          报表管理
+        </div>
+        <div class="nav-item" data-page="permissions">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6z"/>
+          </svg>
+          权限管理
+        </div>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <div class="topbar">
+        <div class="top-left">
+          <span>侵财助手</span>
+          <span>/</span>
+          <strong id="crumb">警情列表</strong>
+        </div>
+        <div class="top-right">
+          <svg class="icon-btn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          </svg>
+          <svg class="icon-btn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          <div class="user" id="userToggle">
+            <div class="avatar">U</div>
+            <span>用户名</span>
+            <span>▾</span>
+          </div>
+          <div class="user-menu" id="userMenu">
+            <div class="menu-item" data-modal="feedbackModal">✍️ 意见反馈</div>
+            <div class="menu-item" data-modal="aboutModal">ℹ️ 关于</div>
+            <div class="menu-divider"></div>
+            <div class="menu-item danger">退出登录</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+
+        <!-- 警情列表 -->
+        <section class="page active" id="page-police">
+          <div class="card" style="display:flex;flex-direction:column;flex:1;">
+            <div class="toolbar">
+              <input class="inp" placeholder="编号" style="width:150px;" />
+              <input class="inp" type="date" value="2026-03-25" style="width:150px;" /><span style="color:var(--text-secondary);">至</span><input class="inp" type="date" value="2026-03-25" style="width:150px;" />
+              <select class="sel"><option>解析状态：全部</option><option>解析中</option><option>成功</option><option>失败</option></select>
+              <select class="sel"><option>复核状态：全部</option><option>已复核</option><option>未复核</option></select>
+              <select class="sel"><option>警情类型：全部</option><option>刑事类</option><option>行政类</option></select>
+              <select class="sel"><option>地区：全部</option><option>合肥</option><option>芜湖</option><option>阜阳</option></select>
+              <select class="sel"><option>警情子类：全部</option><option>入户盗窃</option><option>盗窃车内物品</option></select>
+              <button class="btn primary">筛选</button>
+              <button class="btn">重置</button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>日期</th><th>报警内容</th><th>地市</th><th>警情子类</th><th>AI 子类</th><th>警情类型</th><th>解析状态</th><th>复核状态</th><th>操作</th></tr></thead>
+                <tbody>
+                  <tr><td>2026-03-25 14:29</td><td><div class="ellipsis-3">2026 年 03 月 25 日，群众报警称：在合肥市庐阳区某小区地下车库，电动车被盗，现场无明显撬锁痕迹，疑似未上锁被顺手牵羊。</div></td><td>合肥</td><td>盗窃非机动车</td><td>顺手牵羊</td><td><span class="tag blue">刑事类</span></td><td><span class="tag green"><span class="dot" style="background:#52c41a"></span>成功</span></td><td><span class="tag blue">已复核</span></td><td><span class="link" onclick="openDetailPage('police')">查看详情</span></td></tr>
+                  <tr><td>2026-03-25 13:11</td><td><div class="ellipsis-3">接警：商户反映营业结束后发现收银台现金丢失，金额约 2500 元，店门有被技术开锁痕迹。</div></td><td>芜湖</td><td>盗窃商户</td><td>技术开锁</td><td><span class="tag blue">刑事类</span></td><td><span class="tag green"><span class="dot" style="background:#52c41a"></span>成功</span></td><td><span class="tag blue">已复核</span></td><td><span class="link" onclick="openDetailPage('police')">查看详情</span></td></tr>
+                  <tr><td>2026-03-25 12:08</td><td><div class="ellipsis-3">报警称出租屋内笔记本电脑被盗，房门未损坏，初步怀疑熟人作案，周边监控正在调取。</div></td><td>阜阳</td><td>入户盗窃</td><td>熟人作案</td><td><span class="tag blue">刑事类</span></td><td><span class="tag orange"><span class="dot" style="background:#faad14"></span>解析中</span></td><td><span class="tag orange">未复核</span></td><td>-</td></tr>
+                  <tr><td>2026-03-25 11:52</td><td><div class="ellipsis-3">报警人称其停放在路边未上锁自行车丢失，现场群众表示有可疑男子骑走。</div></td><td>安庆</td><td>盗窃非机动车</td><td>路边盗窃</td><td><span class="tag purple">行政类</span></td><td><span class="tag green"><span class="dot" style="background:#52c41a"></span>成功</span></td><td><span class="tag blue">已复核</span></td><td><span class="link" onclick="openDetailPage('police')">查看详情</span></td></tr>
+                  <tr><td>2026-03-25 10:15</td><td><div class="ellipsis-3">群众报警称放在商场储物柜内手机丢失，储物柜门锁完好，疑似他人误取后未归还。</div></td><td>蚌埠</td><td>盗窃电子产品及配件</td><td>误取未还</td><td><span class="tag purple">行政类</span></td><td><span class="tag red"><span class="dot" style="background:#ff4d4f"></span>失败</span></td><td><span class="tag orange">未复核</span></td><td><span class="link" onclick="reloadItem(this)">重新加载</span></td></tr>
+                  <tr><td>2026-03-25 09:44</td><td><div class="ellipsis-3">报警称网约车后备箱内行李被盗，案损约 3600 元，车辆中途停靠服务区时间较长。</div></td><td>滁州</td><td>盗窃车内财物</td><td>服务区盗窃</td><td><span class="tag blue">刑事类</span></td><td><span class="tag green"><span class="dot" style="background:#52c41a"></span>成功</span></td><td><span class="tag blue">已复核</span></td><td><span class="link" onclick="openDetailPage('police')">查看详情</span></td></tr>
+                  <tr><td>2026-03-25 09:12</td><td><div class="ellipsis-3">报案人称工地工具箱被盗，内含电钻、切割机等设备，价值约 1.2 万元。</div></td><td>六安</td><td>盗窃工地</td><td>工地盗窃</td><td><span class="tag blue">刑事类</span></td><td><span class="tag green"><span class="dot" style="background:#52c41a"></span>成功</span></td><td><span class="tag blue">已复核</span></td><td><span class="link" onclick="openDetailPage('police')">查看详情</span></td></tr>
+                  <tr><td>2026-03-25 08:36</td><td><div class="ellipsis-3">报警称快递驿站夜间有包裹被盗，监控中出现可疑人员，已锁定体貌特征。</div></td><td>宿州</td><td>盗窃快递物品</td><td>夜间盗窃</td><td><span class="tag purple">行政类</span></td><td><span class="tag orange"><span class="dot" style="background:#faad14"></span>解析中</span></td><td><span class="tag orange">未复核</span></td><td>-</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="pagination">
+              <div>共 248 条</div>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <select class="sel" style="width:100px;"><option>10 条/页</option><option>50 条/页</option><option>100 条/页</option><option>200 条/页</option></select>
+                <div class="pages"><div class="page-num">‹</div><div class="page-num active">1</div><div class="page-num">2</div><div class="page-num">3</div><div class="page-num">›</div></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 案件列表 -->
+        <section class="page" id="page-cases">
+          <div class="card" style="display:flex;flex-direction:column;flex:1;">
+            <div class="tabs" id="caseTabs">
+              <div class="tab active" data-target="case-criminal">刑事案件</div>
+              <div class="tab" data-target="case-admin">行政案件</div>
+            </div>
+            <div class="toolbar">
+              <input class="inp" placeholder="案件编号" style="width:180px;" />
+              <input class="inp" type="date" value="2026-03-25" style="width:150px;" /><span style="color:var(--text-secondary);">至</span><input class="inp" type="date" value="2026-03-25" style="width:150px;" />
+              <select class="sel"><option>解析状态：全部</option><option>解析中</option><option>成功</option><option>失败</option></select>
+              <select class="sel"><option>破案状态：全部</option><option>已破案</option><option>未破案</option></select>
+              <select class="sel"><option>地区：全部</option><option>合肥</option><option>阜阳</option></select>
+              <button class="btn primary">筛选</button>
+              <button class="btn">重置</button>
+            </div>
+            <div class="subpane active" id="case-criminal">
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th>日期</th><th>案件编号</th><th>地市</th><th>简要案情</th><th>破案状态</th><th>解析状态</th><th>操作</th></tr></thead>
+                  <tbody>
+                    <tr><td>2026-03-25 11:20:05</td><td>A3401035000002026031081</td><td>合肥</td><td><div class="ellipsis-3">嫌疑人趁超市营业高峰期盗窃手机一部，案损 3800 元，监控显示作案后骑电动车离开。</div></td><td><span class="tag orange"><span class="dot" style="background:#faad14"></span>未破案</span></td><td><span class="tag green"><span class="dot" style="background:#52c41a"></span>成功</span></td><td><span class="link" onclick="openDetailPage('case')">查看详情</span></td></tr>
+                    <tr><td>2026-03-25 10:08:32</td><td>A3408225000002026030721</td><td>安庆</td><td><div class="ellipsis-3">居民家中现金及首饰被盗，门窗无明显破坏，初步怀疑技术开锁作案。</div></td><td><span class="tag green"><span class="dot" style="background:#52c41a"></span>已破案</span></td><td><span class="tag green"><span class="dot" style="background:#52c41a"></span>成功</span></td><td><span class="link" onclick="openDetailPage('case')">查看详情</span></td></tr>
+                    <tr><td>2026-03-25 09:33:18</td><td>A3412005000002026030288</td><td>阜阳</td><td><div class="ellipsis-3">夜间路边多辆车窗被砸，车内财物被盗，案损共计 9500 元。</div></td><td><span class="tag orange"><span class="dot" style="background:#faad14"></span>未破案</span></td><td><span class="tag orange"><span class="dot" style="background:#faad14"></span>解析中</span></td><td>-</td></tr>
+                    <tr><td>2026-03-24 18:20:55</td><td>A3402005000002026030115</td><td>芜湖</td><td><div class="ellipsis-3">工厂仓库铜线被盗，涉案价值 2.6 万元，嫌疑人已锁定。</div></td><td><span class="tag green"><span class="dot" style="background:#52c41a"></span>已破案</span></td><td><span class="tag green"><span class="dot" style="background:#52c41a"></span>成功</span></td><td><span class="link" onclick="openDetailPage('case')">查看详情</span></td></tr>
+                    <tr><td>2026-03-24 16:04:41</td><td>A3403005000002026030870</td><td>蚌埠</td><td><div class="ellipsis-3">嫌疑人盗窃电动车电瓶多起，已串并案件 4 起。</div></td><td><span class="tag orange"><span class="dot" style="background:#faad14"></span>未破案</span></td><td><span class="tag red"><span class="dot" style="background:#ff4d4f"></span>失败</span></td><td><span class="link" onclick="reloadItem(this)">重新加载</span></td></tr>
+                    <tr><td>2026-03-24 15:15:11</td><td>A3415005000002026030455</td><td>六安</td><td><div class="ellipsis-3">学校机房电脑配件被盗，排查内部人员与外来维修人员。</div></td><td><span class="tag green"><span class="dot" style="background:#52c41a"></span>已破案</span></td><td><span class="tag green"><span class="dot" style="background:#52c41a"></span>成功</span></td><td><span class="link" onclick="openDetailPage('case')">查看详情</span></td></tr>
+                    <tr><td>2026-03-24 14:03:27</td><td>A3413005000002026030604</td><td>宿州</td><td><div class="ellipsis-3">沿街门店凌晨被撬，收银抽屉内现金丢失。</div></td><td><span class="tag orange"><span class="dot" style="background:#faad14"></span>未破案</span></td><td><span class="tag green"><span class="dot" style="background:#52c41a"></span>成功</span></td><td><span class="link" onclick="openDetailPage('case')">查看详情</span></td></tr>
+                    <tr><td>2026-03-24 10:31:00</td><td>A3418005000002026030320</td><td>宣城</td><td><div class="ellipsis-3">农村地区牲畜被盗，案损约 1.8 万元，已布控重点区域。</div></td><td><span class="tag orange"><span class="dot" style="background:#faad14"></span>未破案</span></td><td><span class="tag orange"><span class="dot" style="background:#faad14"></span>解析中</span></td><td>-</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div class="subpane" id="case-admin">
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th>日期</th><th>案件编号</th><th>地市</th><th>简要案情</th><th>破案状态</th><th>解析状态</th><th>操作</th></tr></thead>
+                  <tbody>
+                    <tr><td>2026-03-25 13:48:20</td><td>XZ340103440000202603188</td><td>合肥</td><td><div class="ellipsis-3">群众纠纷中发现手机遗失，经调解后追回，作为行政案件录入。</div></td><td><span class="tag green"><span class="dot" style="background:#52c41a"></span>已办结</span></td><td><span class="tag green"><span class="dot" style="background:#52c41a"></span>成功</span></td><td><span class="link" onclick="openDetailPage('case')">查看详情</span></td></tr>
+                    <tr><td>2026-03-25 12:04:39</td><td>XZ340200440000202603074</td><td>芜湖</td><td><div class="ellipsis-3">商场内疑似顺手牵羊，物品价值较小，行政立案处理。</div></td><td><span class="tag orange"><span class="dot" style="background:#faad14"></span>处理中</span></td><td><span class="tag orange"><span class="dot" style="background:#faad14"></span>解析中</span></td><td>-</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div class="pagination"><div>共 7262 条</div><div class="pages"><div class="page-num active">1</div><div class="page-num">2</div><div class="page-num">3</div></div></div>
+          </div>
+        </section>
+
+        <!-- 人员列表 -->
+        <section class="page" id="page-personnel">
+          <div class="card" style="display:flex;flex-direction:column;flex:1;">
+            <div class="toolbar">
+              <input class="inp" placeholder="人员编号" style="width:150px;" />
+              <input class="inp" type="date" value="2026-01-01" style="width:150px;" /><span style="color:var(--text-secondary);">至</span><input class="inp" type="date" value="2026-03-25" style="width:150px;" />
+              <input class="inp" placeholder="姓名" style="width:120px;" />
+              <select class="sel"><option>地区：全部</option><option>合肥</option><option>芜湖</option></select>
+              <button class="btn primary">筛选</button>
+              <button class="btn">重置</button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>日期</th><th>人员编号</th><th>姓名</th><th>类别</th><th>年龄</th><th>涉案罪名</th><th>涉案数</th><th>地市</th><th>操作</th></tr></thead>
+                <tbody>
+                  <tr><td>2026-03-25 14:23:01</td><td>RY3401030012</td><td>李某某</td><td><span class="tag blue">刑事</span></td><td>29</td><td>盗窃机动车单位案</td><td>7</td><td>合肥</td><td><span class="link" onclick="openDetailPage('person')">查看详情</span></td></tr>
+                  <tr><td>2026-03-25 11:09:43</td><td>RY3412000094</td><td>张某</td><td><span class="tag purple">行政</span></td><td>34</td><td>盗窃车内财物案</td><td>2</td><td>阜阳</td><td><span class="link" onclick="openDetailPage('person')">查看详情</span></td></tr>
+                  <tr><td>2026-03-24 18:30:02</td><td>RY3402000118</td><td>王某某</td><td><span class="tag blue">刑事</span></td><td>41</td><td>入户盗窃案</td><td>3</td><td>芜湖</td><td><span class="link" onclick="openDetailPage('person')">查看详情</span></td></tr>
+                  <tr><td>2026-03-24 16:01:25</td><td>RY3403000153</td><td>赵某</td><td><span class="tag blue">刑事</span></td><td>18</td><td>盗窃电子产品案</td><td>1</td><td>蚌埠</td><td><span class="link" onclick="openDetailPage('person')">查看详情</span></td></tr>
+                  <tr><td>2026-03-24 13:55:19</td><td>RY3415000077</td><td>刘某</td><td><span class="tag purple">行政</span></td><td>23</td><td>盗窃非机动车案</td><td>2</td><td>六安</td><td><span class="link" onclick="openDetailPage('person')">查看详情</span></td></tr>
+                  <tr><td>2026-03-23 20:11:10</td><td>RY3413000133</td><td>孙某某</td><td><span class="tag blue">刑事</span></td><td>37</td><td>盗窃商户案</td><td>4</td><td>宿州</td><td><span class="link" onclick="openDetailPage('person')">查看详情</span></td></tr>
+                  <tr><td>2026-03-23 14:08:08</td><td>RY3418000048</td><td>周某</td><td><span class="tag purple">行政</span></td><td>19</td><td>盗窃快递物品案</td><td>1</td><td>宣城</td><td><span class="link" onclick="openDetailPage('person')">查看详情</span></td></tr>
+                  <tr><td>2026-03-22 09:10:55</td><td>RY3408220109</td><td>吴某</td><td><span class="tag blue">刑事</span></td><td>46</td><td>盗窃工地案</td><td>5</td><td>安庆</td><td><span class="link" onclick="openDetailPage('person')">查看详情</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="pagination"><div>共 937 条</div><div class="pages"><div class="page-num active">1</div><div class="page-num">2</div><div class="page-num">3</div></div></div>
+          </div>
+        </section>
+
+        <!-- 报表管理 -->
+        <section class="page" id="page-reports">
+          <div class="notice">展示<strong>报表月</strong>整月数据；<strong>环比</strong>相对上月整月、<strong>同比</strong>相对去年同月整月（不展示上月与去年同月的原始数值列）。</div>
+          <div class="card" style="flex:1;display:flex;flex-direction:column;">
+            <div class="tabs" id="reportTabs">
+              <div class="tab active" data-target="rep-stats">统计报表</div>
+              <div class="tab" data-target="rep-ai">分析报告</div>
+            </div>
+
+ <div class="subpane active" id="rep-stats">
+              <div class="toolbar" style="border-bottom:1px solid var(--border);flex-wrap:wrap;gap:12px 16px;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <label style="color:var(--text-secondary);">统计维度</label>
+                  <select class="sel" id="repTimeType" style="width:100px;">
+                    <option value="month">按月统计</option>
+                    <option value="period">按周期统计</option>
+                  </select>
+                </div>
+                
+                <div id="filterMonthWrap" style="display:flex; align-items:center; gap:8px;">
+                  <label style="color:var(--text-secondary);">报表月</label>
+                  <input class="inp" id="repStatsMonth" type="month" value="2026-05" style="width:148px;" />
+                </div>
+
+                <div id="filterPeriodWrap" style="display:none; align-items:center; gap:8px;">
+                  <label style="color:var(--text-secondary);">统计周期</label>
+                  <input class="inp" id="repDateStart" type="date" value="2026-05-02" style="width:140px;" />
+                  <span style="color:var(--text-secondary);">至</span>
+                  <input class="inp" id="repDateEnd" type="date" value="2026-05-09" style="width:140px;" />
+                </div>
+
+                <div style="display:flex; align-items:center; gap:8px; margin-left:8px;">
+                  <label style="color:var(--text-secondary);">报表类型</label>
+                  <select class="sel" id="repType" style="width:200px;">
+                    <option value="police-subtype">警情统计报表</option>
+                    <option value="criminal">刑事案件报表</option>
+                    <option value="admin">行政案件报表</option>
+                  </select>
+                </div>
+                <span class="right"></span>
+                <button type="button" class="btn" id="btnStatsRefresh">刷新数据</button>
+                <button type="button" class="btn primary" id="btnStatsGen">生成报表</button>
+              </div>
+              
+              <div style="padding:10px 16px; background:#f0f5ff; border-bottom:1px solid var(--border); display:flex; align-items:center;">
+                 <i class="fas fa-info-circle" style="color:#1677ff; margin-right:8px;"></i>
+                 <span id="statsMonthRanges" style="color:#1677ff; font-size:13px; font-weight:500;">
+                    报表统计期：2026年05月 · 环比基数期：2026年04月 · 同比基数期：2025年05月
+                 </span>
+              </div>
+
+              <div id="crimTheftFilterBar" style="display:none;padding:10px 16px;border-bottom:1px solid var(--border);background:#fafafa;align-items:center;gap:12px;flex-wrap:wrap;">
+                <label style="color:var(--text-secondary);font-size:13px;">案件分类</label>
+                <select class="sel" id="crimTheftClassFilter" style="min-width:280px;"></select>
+              </div>
+              <div id="statsSheetTabWrap" style="border-bottom:1px solid var(--border);background:var(--bg-container);">
+                <div class="tabs stats-inner-tabs" id="tabsPolice" data-reptype="police-subtype">
+                  <div class="tab active" data-sheet="police-subcat">警情子类统计</div>
+                  <div class="tab" data-sheet="police-city">市局警情统计</div>
+                </div>
+                <div class="tabs stats-inner-tabs" id="tabsCriminal" data-reptype="criminal" style="display:none;">
+                  <div class="tab active" data-sheet="crim-cat">案件类别统计</div>
+                  <div class="tab" data-sheet="crim-city">地市案件统计</div>
+                  <div class="tab" data-sheet="crim-theft">地市盗窃案件统计</div>
+                </div>
+                <div class="tabs stats-inner-tabs" id="tabsAdmin" data-reptype="admin" style="display:none;">
+                  <div class="tab active" data-sheet="adm-city">地市案件统计</div>
+                  <div class="tab" data-sheet="adm-cat">案件类别统计</div>
+                </div>
+              </div>
+              <div class="panel-head" style="border-bottom:1px solid var(--border);">
+                <span id="statsTitle" style="font-weight:600;">警情报表 — 警情子类统计</span>
+                <span class="tag blue" id="statsTag">2026年05月</span>
+                <span class="right"></span>
+                <button type="button" class="btn">导出 Excel</button>
+                <button type="button" class="btn">导出 PDF</button>
+              </div>
+              <div class="stats-wrap">
+                <table class="stats-table" id="statsTableMain">
+                  <thead id="statsThead"></thead>
+                  <tbody id="statsBody"></tbody>
+                </table>
+              </div>
+              <div class="pagination">
+                <div id="statsFootNote">数据截止至上一自然日</div>
+                <div id="statsGenTime">生成时间：—</div>
+              </div>
+            </div>
+
+            <div class="subpane" id="rep-ai">
+              <div class="report-layout">
+                <div style="display:flex;flex-direction:column;flex:1;">
+                  <div class="toolbar" style="border-radius:0;border-bottom:1px solid var(--border);">
+                    <label style="color:var(--text-secondary);">统计日期</label><input class="inp" type="date" value="2026-03-25" style="width:160px;" />
+                    <label style="color:var(--text-secondary);margin-left:12px;">报告类型</label>
+                    <select class="sel" style="width:320px;"><option>侵财类警情案件分析报告（模板：侵财测试报告_提取模版.docx）</option></select>
+                    <label style="color:var(--text-secondary);margin-left:12px;">输出格式</label><select class="sel" style="width:120px;"><option>Word (.docx)</option><option>PDF</option></select>
+                  </div>
+                  <div style="padding:16px 20px; border-bottom:1px solid var(--border);">
+                    <div class="notice" style="margin:0 0 16px 0;">系统按《侵财测试报告_提取模版.docx》章节结构自动汇总警情与案件指标；以下为设计稿示例数据。</div>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                      <button type="button" class="btn primary" onclick="startReportProgress()">立即生成报告</button>
+                      <button type="button" class="btn" onclick="openModal('reportAnalysisModal')">预览报告样例</button>
+                      <span id="reportProgress" style="color:var(--text-secondary); font-size:13px;"></span>
+                    </div>
+                  </div>
+                  <div class="panel-head" style="border-bottom:1px solid var(--border);">历史报告</div>
+                  <div class="table-wrap" style="flex:1;">
+                    <table>
+                      <thead><tr><th>报告名称</th><th>状态</th><th>时间</th><th>操作</th></tr></thead>
+                      <tbody>
+                        <tr><td>2026 年 3 月 25 日 侵财类警情案件分析报告</td><td><span class="tag green">已生成</span></td><td>2026-03-25 08:05</td><td><span class="link">下载</span> | <span class="link" onclick="openModal('reportAnalysisModal')">查看详情</span> | <span class="link danger">删除</span></td></tr>
+                        <tr><td>2026 年 3 月 24 日 侵财类警情案件分析报告</td><td><span class="tag green">已生成</span></td><td>2026-03-24 19:40</td><td><span class="link">下载</span> | <span class="link" onclick="openModal('reportAnalysisModal')">查看详情</span> | <span class="link danger">删除</span></td></tr>
+                        <tr><td>2026 年 3 月 23 日 侵财类警情案件分析报告</td><td><span class="tag orange">生成中</span></td><td>2026-03-23 22:10</td><td><span class="link">刷新</span> | <span class="link danger">删除</span></td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                <aside class="report-side">
+                  <div class="card" style="margin-bottom:16px;">
+                    <div class="panel-head">报告结构（模版）</div>
+                    <div style="padding:16px; line-height:2; font-size:13px; color:var(--text); background:#fafafa; border-top:1px solid var(--border);">
+                      <div style="font-weight:600; margin-bottom:8px; color:var(--text);">侵财类警情案件分析报告</div>
+                      <div style="color:var(--text-secondary); margin-bottom:12px;">（统计日截至系统自动取值）</div>
+                      <div style="margin-bottom:8px;">
+                        <span style="color:#1677ff; font-weight:500;">一、警情分析</span>
+                        <div style="margin-left:20px; margin-top:4px;">
+                          <div>（一）地市变化</div>
+                          <div>（二）案件类型</div>
+                          <div>（三）类案警情分析</div>
+                          <div>（四）问题警情</div>
+                        </div>
+                      </div>
+                      <div>
+                        <span style="color:#1677ff; font-weight:500;">二、案件分析</span>
+                        <div style="margin-left:20px; margin-top:4px;">
+                          <div>（一）刑事案件</div>
+                          <div>（二）行政案件</div>
+                          <div>（三）作案人员分析</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="card">
+                    <div class="panel-head">本日数据概览</div>
+                    <div style="padding:16px; display:grid; gap:12px; background:#fafafa; border-top:1px solid var(--border);">
+                      <div style="background:#fff; padding:16px; border-radius:8px; border:1px solid var(--border); box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+                        <div style="color:var(--text-secondary); font-size:13px; margin-bottom:8px;">警情总量</div>
+                        <div style="font-size:28px; font-weight:600; color:#1677ff; margin-bottom:4px;">248</div>
+                        <div style="color:#ff4d4f; font-size:12px; font-weight:500;">↓ 6.4%</div>
+                      </div>
+                      <div style="background:#fff; padding:16px; border-radius:8px; border:1px solid var(--border); box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+                        <div style="color:var(--text-secondary); font-size:13px; margin-bottom:8px;">刑事案件</div>
+                        <div style="font-size:28px; font-weight:600; color:#722ed1; margin-bottom:4px;">173</div>
+                        <div style="color:#ff4d4f; font-size:12px; font-weight:500;">↓ 4.9%</div>
+                      </div>
+                      <div style="background:#fff; padding:16px; border-radius:8px; border:1px solid var(--border); box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+                        <div style="color:var(--text-secondary); font-size:13px; margin-bottom:8px;">行政案件</div>
+                        <div style="font-size:28px; font-weight:600; color:#13c2c2; margin-bottom:4px;">75</div>
+                        <div style="color:#52c41a; font-size:12px; font-weight:500;">↑ 9.8%</div>
+                      </div>
+                      <div style="background:#fff; padding:16px; border-radius:8px; border:1px solid var(--border); box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+                        <div style="color:var(--text-secondary); font-size:13px; margin-bottom:8px;">解析完成率</div>
+                        <div style="font-size:28px; font-weight:600; color:#52c41a; margin-bottom:4px;">94.3%</div>
+                        <div style="color:#52c41a; font-size:12px; font-weight:500;">↑ 1.2%</div>
+                      </div>
+                    </div>
+                  </div>
+                </aside>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 权限管理 -->
+        <section class="page" id="page-permissions">
+          <div class="card" style="flex:1;display:flex;flex-direction:column;">
+            <div class="tabs" id="permTabs">
+              <div class="tab active" data-target="perm-user">用户管理</div>
+              <div class="tab" data-target="perm-org">组织管理</div>
+              <div class="tab" data-target="perm-role">角色管理</div>
+            </div>
+
+            <div class="subpane active" id="perm-user">
+              <div class="toolbar">
+                <input class="inp" placeholder="用户名" style="width:150px;" />
+                <select class="sel"><option>所属组织：全部</option><option>省厅</option><option>合肥市公安局</option></select>
+                <select class="sel"><option>角色：全部</option><option>超级管理员</option><option>数据分析员</option></select>
+                <span class="right"></span>
+                <button class="btn primary" onclick="openModal('userModal')">新增用户</button>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th>用户名</th><th>所属组织</th><th>角色</th><th>最后登录时间</th><th>状态</th><th>操作</th></tr></thead>
+                  <tbody>
+                    <tr><td>管理员</td><td>安徽省公安厅</td><td>超级管理员</td><td>2026-03-25 08:20:10</td><td><span class="tag green">启用</span></td><td><span class="link" onclick="openModal('userModal')">编辑</span> | <span class="link" onclick="openModal('pwdModal')">修改密码</span> | <span class="link danger">删除</span></td></tr>
+                    <tr><td>zhangsan</td><td>合肥市公安局</td><td>系统管理员</td><td>2026-03-24 21:10:45</td><td><span class="tag green">启用</span></td><td><span class="link" onclick="openModal('userModal')">编辑</span> | <span class="link" onclick="openModal('pwdModal')">修改密码</span> | <span class="link danger">删除</span></td></tr>
+                    <tr><td>lisi</td><td>芜湖市公安局</td><td>数据分析员</td><td>2026-03-24 19:43:01</td><td><span class="tag green">启用</span></td><td><span class="link" onclick="openModal('userModal')">编辑</span> | <span class="link" onclick="openModal('pwdModal')">修改密码</span> | <span class="link danger">删除</span></td></tr>
+                    <tr><td>wangwu</td><td>阜阳市公安局</td><td>普通用户</td><td>2026-03-24 17:06:29</td><td><span class="tag orange">禁用</span></td><td><span class="link" onclick="openModal('userModal')">编辑</span> | <span class="link" onclick="openModal('pwdModal')">修改密码</span> | <span class="link danger">删除</span></td></tr>
+                    <tr><td>zhaoliu</td><td>安庆市公安局</td><td>数据分析员</td><td>2026-03-23 09:15:44</td><td><span class="tag green">启用</span></td><td><span class="link" onclick="openModal('userModal')">编辑</span> | <span class="link" onclick="openModal('pwdModal')">修改密码</span> | <span class="link danger">删除</span></td></tr>
+                    <tr><td>sunqi</td><td>蚌埠市公安局</td><td>普通用户</td><td>2026-03-22 16:31:08</td><td><span class="tag green">启用</span></td><td><span class="link" onclick="openModal('userModal')">编辑</span> | <span class="link" onclick="openModal('pwdModal')">修改密码</span> | <span class="link danger">删除</span></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="subpane" id="perm-org">
+              <div class="toolbar">
+                <strong>组织管理</strong>
+                <span class="right"></span>
+                <button class="btn primary" onclick="openModal('orgModal')">添加组织</button>
+              </div>
+              <div style="padding:16px;flex:1;display:flex;flex-direction:column;min-height:0;">
+                <div class="perm-layout" style="flex:1;min-height:0;">
+                  <div class="org-tree">
+                    <div class="org-item"><b>安徽省公安厅</b><span class="org-actions"><span>+添加下级</span><span>编辑</span></span></div>
+                    <div class="org-item indent-1">合肥市公安局<span class="org-actions"><span>+添加下级</span><span>编辑</span></span></div>
+                    <div class="org-item indent-2">刑侦支队<span class="org-actions"><span>编辑</span></span></div>
+                    <div class="org-item indent-2">情报大队<span class="org-actions"><span>编辑</span></span></div>
+                    <div class="org-item indent-1">芜湖市公安局<span class="org-actions"><span>+添加下级</span><span>编辑</span></span></div>
+                    <div class="org-item indent-1">蚌埠市公安局<span class="org-actions"><span>+添加下级</span><span>编辑</span></span></div>
+                  </div>
+                  <div class="card">
+                    <div class="panel-head">组织成员列表（合肥市公安局）</div>
+                    <div class="table-wrap">
+                      <table>
+                        <thead><tr><th>姓名</th><th>账号</th><th>角色</th><th>状态</th></tr></thead>
+                        <tbody>
+                          <tr><td>张三</td><td>zhangsan</td><td>系统管理员</td><td><span class="tag green">启用</span></td></tr>
+                          <tr><td>王五</td><td>wangwu</td><td>数据分析员</td><td><span class="tag green">启用</span></td></tr>
+                          <tr><td>赵六</td><td>zhaoliu</td><td>普通用户</td><td><span class="tag orange">禁用</span></td></tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="subpane" id="perm-role">
+              <div class="toolbar">
+                <input class="inp" placeholder="角色名称" style="width:150px;" />
+                <span class="right"></span>
+                <button class="btn primary" onclick="openModal('roleModal')">新增角色</button>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th>角色名称</th><th>权限范围</th><th>创建时间</th><th>操作</th></tr></thead>
+                  <tbody>
+                    <tr><td>超级管理员</td><td>系统全部权限</td><td>2025-10-01 09:00:00</td><td><span class="link" onclick="openModal('roleModal')">编辑</span> | <span class="link danger">删除</span></td></tr>
+                    <tr><td>系统管理员</td><td>警情列表、案件列表、人员列表、报表管理</td><td>2025-10-10 10:11:00</td><td><span class="link" onclick="openModal('roleModal')">编辑</span> | <span class="link danger">删除</span></td></tr>
+                    <tr><td>数据分析员</td><td>报表管理、警情列表只读、案件列表只读</td><td>2025-10-13 15:22:00</td><td><span class="link" onclick="openModal('roleModal')">编辑</span> | <span class="link danger">删除</span></td></tr>
+                    <tr><td>普通用户</td><td>警情列表、案件列表、人员列表只读</td><td>2025-10-20 08:45:00</td><td><span class="link" onclick="openModal('roleModal')">编辑</span> | <span class="link danger">删除</span></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 警情详情页 -->
+        <section class="page" id="page-police-detail">
+          <div class="card" style="flex:1;display:flex;flex-direction:column;">
+            <div class="toolbar" style="border-bottom:1px solid var(--border);">
+              <button class="btn" onclick="backToList('police')">← 返回警情列表</button>
+              <span class="right"></span>
+              <strong>警情详情</strong>
+            </div>
+            <div style="padding:20px;overflow:auto;flex:1;">
+              <div class="detail-grid">
+                <div>
+                  <span class="section-tag blue">警情信息</span>
+                  <div class="detail-card">
+                    <h3>基础信息 <span style="font-size:12px;color:var(--text-secondary);font-weight:400;">IDXXXXXXXXXXX</span></h3>
+                    <div class="muted-box">
+                      <div class="kv"><div class="k">所属市局</div><div class="v">合肥市公安局</div></div>
+                      <div class="kv"><div class="k">首次报警时间</div><div class="v">2026-03-25 14:29:29</div></div>
+                      <div class="kv"><div class="k">所属区县</div><div class="v">庐阳区</div></div>
+                      <div class="kv"><div class="k">警情类别 (部标)</div><div class="v">刑事类警情</div></div>
+                      <div class="kv"><div class="k">警情细类 (部标)</div><div class="v">盗窃</div></div>
+                      <div class="kv"><div class="k">警情子类 (部标)</div><div class="v">盗窃、盗刷银行卡</div></div>
+                      <div class="kv"><div class="k">处理结果</div><div class="v">受理刑事案件</div></div>
+                    </div>
+                    <h3 style="margin-top:20px;">详情警情</h3>
+                    <div class="muted-box">
+                      <div class="kv"><div class="k">报警内容</div><div class="v">2026 年 03 月 25 日，群众报警称：XXXXXXXX 地址下，XXXX 对像被盗 XXXX 元五百块钱。</div></div>
+                      <div class="kv"><div class="k">反馈内容</div><div class="v">2026-03-25 23:34:12 接【报警人：姓名：XXX，性别：X，身份证号：XXXXXXXXXXXX】称在 XX 县 XX 街道 XXX 小区被盗……</div></div>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <span class="section-tag purple">模型解析结果</span>
+                  <div class="detail-card">
+                    <h3>警情基础信息 <span class="link" style="float:right;font-size:13px;">编辑</span></h3>
+                    <div class="muted-box">
+                      <div class="kv"><div class="k">发生时段</div><div class="v">凌晨 0-6 时</div></div>
+                      <div class="kv"><div class="k">发生地点</div><div class="v">住宅小区</div></div>
+                      <div class="kv"><div class="k">人员身份</div><div class="v">醉酒人员</div></div>
+                      <div class="kv"><div class="k">涉事物品/工具</div><div class="v">手机</div></div>
+                      <div class="kv"><div class="k">警情子类</div><div class="v">大模型重新解析</div></div>
+                    </div>
+                    <h3 style="margin-top:20px;">警情处理信息 <span class="link" style="float:right;font-size:13px;">编辑</span></h3>
+                    <div class="muted-box">
+                      <div class="kv"><div class="k">警情解决状态</div><div class="v">已处理闭环（包含批评教育、书面告诫、治安调解）</div></div>
+                      <div class="kv"><div class="k">财物处理结果</div><div class="v">全部追回</div></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 案件详情页 -->
+        <section class="page" id="page-case-detail">
+          <div class="card" style="flex:1;display:flex;flex-direction:column;">
+            <div class="toolbar" style="border-bottom:1px solid var(--border);">
+              <button class="btn" onclick="backToList('cases')">← 返回案件列表</button>
+              <span class="right"></span>
+              <strong>案件详情</strong>
+            </div>
+            <div style="padding:20px;overflow:auto;flex:1;">
+              <div class="detail-grid">
+                <div>
+                  <span class="section-tag blue">案件信息</span>
+                  <div class="detail-card">
+                    <h3>基础信息 <span style="font-size:12px;color:var(--text-secondary);font-weight:400;">A3401035000002026031081</span></h3>
+                    <div class="muted-box">
+                      <div class="kv"><div class="k">案件编号</div><div class="v" style="font-family:monospace;">A3401035000002026031081</div></div>
+                      <div class="kv"><div class="k">案件名称</div><div class="v">XX手机被盗案</div></div>
+                      <div class="kv"><div class="k">地市 / 县区</div><div class="v">合肥 / 庐阳区</div></div>
+                      <div class="kv"><div class="k">立案时间</div><div class="v">2026-03-25 11:20:05</div></div>
+                      <div class="kv"><div class="k">破案时间</div><div class="v" style="color:var(--warning);">—</div></div>
+                      <div class="kv"><div class="k">发案开始时间</div><div class="v">2026-03-25 10:00:00</div></div>
+                      <div class="kv"><div class="k">立案单位</div><div class="v">合肥市公安局庐阳分局逍遥津派出所</div></div>
+                      <div class="kv"><div class="k">案件状态</div><div class="v" style="color:var(--warning);font-weight:600;">立案侦查</div></div>
+                      <div class="kv"><div class="k">案件主类别</div><div class="v">盗窃厂矿、学校、企事业单位案</div></div>
+                      <div class="kv"><div class="k">案发地域</div><div class="v">城区</div></div>
+                      <div class="kv"><div class="k">创建类别</div><div class="v">正常案件</div></div>
+                      <div class="kv"><div class="k">涉案总价值</div><div class="v" style="color:var(--error);font-weight:600;">¥9,000</div></div>
+                      <div class="kv"><div class="k">追缴财物总价值</div><div class="v">¥0</div></div>
+                      <div class="kv"><div class="k">挽回经济损失</div><div class="v">¥0</div></div>
+                      <div class="kv"><div class="k">事发地址</div><div class="v">合肥市庐阳区逍遥津街道XX路XX号XX大厦3楼</div></div>
+                    </div>
+                    <h3 style="margin-top:20px;">简要案情</h3>
+                    <div class="muted-box">
+                      <div class="kv"><div class="k">案情描述</div><div class="v">被害人张某某于2026年3月25日10时许，在合肥市庐阳区XX大厦3楼办公室内，发现其放置于办公桌上的苹果iPhone 16 Pro手机（价值约人民币9000元）被人盗走。经初步勘查，现场无撬痕迹，疑似为顺手牵羊。</div></div>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <span class="section-tag purple">模型解析结果</span>
+                  <div class="detail-card">
+                    <h3>案件基础信息 <span class="link" style="float:right;font-size:13px;">编辑</span></h3>
+                    <div class="muted-box">
+                      <div class="kv"><div class="k">案件类型</div><div class="v"><span class="tag blue">盗窃案</span></div></div>
+                      <div class="kv"><div class="k">案件主类别（AI）</div><div class="v"><span class="tag purple">盗窃机关单位</span></div></div>
+                      <div class="kv"><div class="k">作案时段</div><div class="v"><span class="tag orange">日间（10-17时）</span></div></div>
+                      <div class="kv"><div class="k">作案地域</div><div class="v"><span class="tag green">商业街</span></div></div>
+                      <div class="kv"><div class="k">作案方式</div><div class="v"><span class="tag gray">顺手牵羊</span> <span class="tag gray">秘密窃取</span></div></div>
+                      <div class="kv"><div class="k">损失金额（AI）</div><div class="v" style="color:var(--error);font-weight:600;">¥9,000</div></div>
+                      <div class="kv"><div class="k">破案情况</div><div class="v"><span class="tag orange">未破案</span></div></div>
+                    </div>
+                    <h3 style="margin-top:20px;">涉案物品（被盗抢物品） <span class="link" style="float:right;font-size:13px;" onclick="toggleCaseStolenEdit('detail')">编辑</span></h3>
+                    <div class="muted-box" id="case-stolen-detail-view">
+                      <div class="kv"><div class="k">被盗抢物品类别</div><div class="v" id="case-stolen-detail-cats"></div></div>
+                      <div class="kv"><div class="k">具体描述</div><div class="v" id="case-stolen-detail-desc" style="white-space:pre-wrap;text-align:left;"></div></div>
+                    </div>
+                    <div class="muted-box" id="case-stolen-detail-edit" style="display:none;">
+                      <div class="form-row" style="margin-bottom:12px;"><label style="margin-bottom:8px;">被盗抢物品类别（可多选）</label>
+                        <div id="case-stolen-detail-checks" class="case-stolen-check-grid"></div>
+                      </div>
+                      <div class="form-row" style="margin-bottom:0;"><label style="margin-bottom:8px;">具体描述</label>
+                        <textarea id="case-stolen-detail-textarea" class="inp w-full" rows="5" style="resize:vertical;font-family:inherit;" placeholder="填写品牌、型号、数量、估值等文字说明"></textarea>
+                      </div>
+                      <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end;">
+                        <button type="button" class="btn" onclick="cancelCaseStolenEdit('detail')">取消</button>
+                        <button type="button" class="btn primary" onclick="saveCaseStolenEdit('detail')">保存</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 人员详情页 -->
+        <section class="page" id="page-person-detail">
+          <div class="card" style="flex:1;display:flex;flex-direction:column;">
+            <div class="toolbar" style="border-bottom:1px solid var(--border);">
+              <button class="btn" onclick="backToList('personnel')">← 返回人员列表</button>
+              <span class="right"></span>
+              <strong>人员详情</strong>
+              <button class="btn primary" style="font-size:12px;">✏️ 编辑信息</button>
+            </div>
+            <div style="padding:20px;overflow:auto;flex:1;">
+              <div class="person-detail-grid">
+                <!-- Left: 人员信息 -->
+                <div>
+                  <span class="pd-section-tag pd-tag-blue">👤 人员信息</span>
+                  <div class="pd-card">
+                    <h3>基础信息 <span style="font-size:12px;color:var(--text-light);font-weight:400;">RY3401030012</span></h3>
+                    <div class="muted-box">
+                      <div class="pd-kv"><span class="pk">姓名</span><span class="pv">李某某</span></div>
+                      <div class="pd-kv"><span class="pk">性别</span><span class="pv">男</span></div>
+                      <div class="pd-kv"><span class="pk">年龄</span><span class="pv">29 岁<span class="tag orange" style="font-size:10px;margin-left:6px;">青年</span></span></div>
+                      <div class="pd-kv"><span class="pk">证件号码</span><span class="pv" style="font-family:monospace;font-size:12px;">340XXXXXXXXXXXXXXX</span></div>
+                      <div class="pd-kv"><span class="pk">地市</span><span class="pv">合肥市</span></div>
+                      <div class="pd-kv"><span class="pk">录入时间</span><span class="pv">2026-03-25 14:23:01</span></div>
+                      <div class="pd-kv"><span class="pk">涉案数</span><span class="pv" style="color:var(--error);font-weight:600;">7 起</span></div>
+                      <div class="pd-kv"><span class="pk">案件类别</span><span class="pv"><span class="tag red">刑事 5起</span> <span class="tag blue">行政 2起</span></span></div>
+                      <div class="pd-kv"><span class="pk">涉案主类别</span><span class="pv">盗窃机关单位案</span></div>
+                      <div class="pd-kv"><span class="pk">强制处置措施</span><span class="pv"><span class="tag orange">行政拘留</span></span></div>
+                      <div class="pd-kv"><span class="pk">当前强制措施</span><span class="pv">取保候审</span></div>
+                      <div class="pd-kv"><span class="pk">执行单位</span><span class="pv">合肥市公安局庐阳分局逍遥津派出所</span></div>
+                    </div>
+                  </div>
+                  <div class="pd-card" style="margin-top:14px;">
+                    <h3>特征标签</h3>
+                    <div style="display:flex;flex-wrap:wrap;gap:6px;">
+                      <span class="tag red" style="font-size:12px;">惯犯</span>
+                      <span class="tag orange" style="font-size:12px;">多次作案</span>
+                      <span class="tag blue" style="font-size:12px;">夜间活动</span>
+                      <span class="tag blue" style="font-size:12px;">盗窃电子产品</span>
+                      <span style="background:#f5f5f5;color:#666;padding:3px 10px;border-radius:4px;font-size:12px;">办公场所</span>
+                      <span style="background:#f5f5f5;color:#666;padding:3px 10px;border-radius:4px;font-size:12px;">商业区</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Right: 涉案信息 -->
+                <div>
+                  <span class="pd-section-tag pd-tag-orange">📁 涉案信息</span>
+                  <div class="pd-card">
+                    <h3>关联案件列表 <span style="font-size:12px;color:var(--text-light);font-weight:400;">共 7 起</span></h3>
+                    <div class="pd-case-card">
+                      <div>
+                        <div style="font-size:12px;font-family:monospace;color:var(--text-light);">A3401035000002025100823</div>
+                        <div class="pd-case-title">XX 手机被盗案</div>
+                        <div class="pd-case-meta">2025-11-30 · 合肥市庐阳区 · 逍遥津派出所</div>
+                      </div>
+                      <div class="pd-case-right">
+                        <div style="font-size:12px;color:var(--text-secondary);">涉案金额</div>
+                        <div style="font-size:16px;font-weight:600;color:var(--error);">¥9,000</div>
+                        <div class="pd-case-status"><span class="tag orange"><span class="dot" style="background:#faad14"></span>未破案</span></div>
+                      </div>
+                    </div>
+                    <div class="pd-case-card">
+                      <div>
+                        <div style="font-size:12px;font-family:monospace;color:var(--text-light);">A3401035000002025090412</div>
+                        <div class="pd-case-title">XX 笔记本电脑被盗案</div>
+                        <div class="pd-case-meta">2025-09-15 · 合肥市蜀山区 · 五里墩派出所</div>
+                      </div>
+                      <div class="pd-case-right">
+                        <div style="font-size:12px;color:var(--text-secondary);">涉案金额</div>
+                        <div style="font-size:16px;font-weight:600;color:var(--error);">¥8,500</div>
+                        <div class="pd-case-status"><span class="tag orange"><span class="dot" style="background:#faad14"></span>未破案</span></div>
+                      </div>
+                    </div>
+                    <div class="pd-case-card">
+                      <div>
+                        <div style="font-size:12px;font-family:monospace;color:var(--text-light);">A3401035000002025070256</div>
+                        <div class="pd-case-title">商场扒窃案</div>
+                        <div class="pd-case-meta">2025-07-08 · 合肥市包河区 · 望湖派出所</div>
+                      </div>
+                      <div class="pd-case-right">
+                        <div style="font-size:12px;color:var(--text-secondary);">涉案金额</div>
+                        <div style="font-size:16px;font-weight:600;color:var(--error);">¥3,200</div>
+                        <div class="pd-case-status"><span class="tag green"><span class="dot" style="background:#52c41a"></span>已破案</span></div>
+                      </div>
+                    </div>
+                    <div class="pd-case-card">
+                      <div>
+                        <div style="font-size:12px;font-family:monospace;color:var(--text-light);">A3401035000002025050134</div>
+                        <div class="pd-case-title">停车场车内财物被盗案</div>
+                        <div class="pd-case-meta">2025-05-20 · 合肥市庐阳区 · 杏花村派出所</div>
+                      </div>
+                      <div class="pd-case-right">
+                        <div style="font-size:12px;color:var(--text-secondary);">涉案金额</div>
+                        <div style="font-size:16px;font-weight:600;color:var(--error);">¥12,500</div>
+                        <div class="pd-case-status"><span class="tag green"><span class="dot" style="background:#52c41a"></span>已破案</span></div>
+                      </div>
+                    </div>
+                    <div class="pd-case-card">
+                      <div>
+                        <div style="font-size:12px;font-family:monospace;color:var(--text-light);">A3401035000002025030087</div>
+                        <div class="pd-case-title">电动车被盗案</div>
+                        <div class="pd-case-meta">2025-03-12 · 合肥市瑶海区 · 明光路派出所</div>
+                      </div>
+                      <div class="pd-case-right">
+                        <div style="font-size:12px;color:var(--text-secondary);">涉案金额</div>
+                        <div style="font-size:16px;font-weight:600;color:var(--error);">¥4,800</div>
+                        <div class="pd-case-status"><span class="tag green"><span class="dot" style="background:#52c41a"></span>已破案</span></div>
+                      </div>
+                    </div>
+                    <div class="pd-case-card">
+                      <div>
+                        <div style="font-size:12px;font-family:monospace;color:var(--text-light);">XZ20250218003</div>
+                        <div class="pd-case-title">治安盗窃案（超市）</div>
+                        <div class="pd-case-meta">2025-02-18 · 合肥市庐阳区 · 林店派出所</div>
+                      </div>
+                      <div class="pd-case-right">
+                        <div style="font-size:12px;color:var(--text-secondary);">涉案金额</div>
+                        <div style="font-size:16px;font-weight:600;color:var(--error);">¥280</div>
+                        <div class="pd-case-status"><span class="tag green"><span class="dot" style="background:#52c41a"></span>已处结</span></div>
+                      </div>
+                    </div>
+                    <div class="pd-case-card">
+                      <div>
+                        <div style="font-size:12px;font-family:monospace;color:var(--text-light);">XZ20240916011</div>
+                        <div class="pd-case-title">治安盗窃案（农贸市场）</div>
+                        <div class="pd-case-meta">2024-09-16 · 合肥市蜀山区 · 南岗派出所</div>
+                      </div>
+                      <div class="pd-case-right">
+                        <div style="font-size:12px;color:var(--text-secondary);">涉案金额</div>
+                        <div style="font-size:16px;font-weight:600;color:var(--error);">¥4,920</div>
+                        <div class="pd-case-status"><span class="tag green"><span class="dot" style="background:#52c41a"></span>已处结</span></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- Drawer + overlay -->
+  <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+  <aside class="drawer" id="drawer">
+    <div class="drawer-head">
+      <div id="drawerTitle">详情</div>
+      <button class="btn" onclick="closeDrawer()">关闭</button>
+    </div>
+    <div class="drawer-body">
+      <div id="drawer-police" class="drawer-pane">
+        <div class="detail-grid">
+          <div>
+            <span class="section-tag blue">警情信息</span>
+            <div class="detail-card">
+              <h3>基础信息 <span style="font-size:12px;color:var(--text-secondary);font-weight:400;">IDXXXXXXXXXXX</span></h3>
+              <div class="muted-box">
+                <div class="kv"><div class="k">所属市局</div><div class="v">合肥市公安局</div></div>
+                <div class="kv"><div class="k">首次报警时间</div><div class="v">2026-03-25 14:29:29</div></div>
+                <div class="kv"><div class="k">所属区县</div><div class="v">庐阳区</div></div>
+                <div class="kv"><div class="k">警情类别 (部标)</div><div class="v">刑事类警情</div></div>
+                <div class="kv"><div class="k">警情细类 (部标)</div><div class="v">盗窃</div></div>
+                <div class="kv"><div class="k">警情子类 (部标)</div><div class="v">盗窃、盗刷银行卡</div></div>
+                <div class="kv"><div class="k">处理结果</div><div class="v">受理刑事案件</div></div>
+              </div>
+              <h3 style="margin-top:20px;">详情警情</h3>
+              <div class="muted-box">
+                <div class="kv"><div class="k">报警内容</div><div class="v">2026 年 03 月 25 日，群众报警称：XXXXXXXX 地址下，XXXX 对像被盗 XXXX 元五百块钱。</div></div>
+                <div class="kv"><div class="k">反馈内容</div><div class="v">2026-03-25 23:34:12 接【报警人：姓名：XXX，性别：X，身份证号：XXXXXXXXXXXX】称在 XX 县 XX 街道 XXX 小区被盗……</div></div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <span class="section-tag purple">模型解析结果</span>
+            <div class="detail-card">
+              <h3>警情基础信息 <span class="link" style="float:right;font-size:13px;">编辑</span></h3>
+              <div class="muted-box">
+                <div class="kv"><div class="k">发生时段</div><div class="v">凌晨 0-6 时</div></div>
+                <div class="kv"><div class="k">发生地点</div><div class="v">住宅小区</div></div>
+                <div class="kv"><div class="k">人员身份</div><div class="v">醉酒人员</div></div>
+                <div class="kv"><div class="k">涉事物品/工具</div><div class="v">手机</div></div>
+                <div class="kv"><div class="k">警情子类</div><div class="v">大模型重新解析</div></div>
+              </div>
+              <h3 style="margin-top:20px;">警情处理信息 <span class="link" style="float:right;font-size:13px;">编辑</span></h3>
+              <div class="muted-box">
+                <div class="kv"><div class="k">警情解决状态</div><div class="v">已处理闭环（包含批评教育、书面告诫、治安调解）</div></div>
+                <div class="kv"><div class="k">财物处理结果</div><div class="v">全部追回</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="drawer-bottom-nav"><span>← 上一条</span><span>下一条 →</span></div>
+      </div>
+
+      <div id="drawer-case" class="drawer-pane" style="display:none">
+        <div class="case-hero" style="margin-bottom:14px;">
+          <div class="case-hero-icon">📁</div>
+          <div class="case-hero-info">
+            <div class="case-hero-name-row">
+              <span class="case-hero-name">XX手机被盗案</span>
+              <span class="case-hero-id">A3401035000002026031081</span>
+            </div>
+            <div class="case-hero-meta">
+              <div class="case-meta-item"><span class="case-meta-label">立案时间</span><span class="case-meta-value">2026-03-25 11:20:05</span></div>
+              <div class="case-meta-item"><span class="case-meta-label">地市</span><span class="case-meta-value">合肥市庐阳区</span></div>
+              <div class="case-meta-item"><span class="case-meta-label">案件状态</span><span class="case-meta-value" style="color:var(--warning);font-weight:600;">立案侦查</span></div>
+            </div>
+            <div class="case-hero-tags">
+              <span class="tag blue">盗窃案</span>
+              <span class="tag purple">盗窃电子产品</span>
+              <span class="tag orange">顺手牵羊</span>
+              <span class="tag green">日间作案</span>
+            </div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+          <div>
+            <span class="pd-section-tag pd-tag-blue">案件信息</span>
+            <div class="pd-card">
+              <h3>基础信息</h3>
+              <div class="muted-box">
+                <div class="pd-kv"><span class="pk">案件编号</span><span class="pv" style="font-family:monospace;font-size:12px;">A3401035000002026031081</span></div>
+                <div class="pd-kv"><span class="pk">案件名称</span><span class="pv">XX手机被盗案</span></div>
+                <div class="pd-kv"><span class="pk">地市 / 县区</span><span class="pv">合肥 / 庐阳区</span></div>
+                <div class="pd-kv"><span class="pk">立案时间</span><span class="pv">2026-03-25 11:20:05</span></div>
+                <div class="pd-kv"><span class="pk">破案时间</span><span class="pv" style="color:var(--warning);">—</span></div>
+                <div class="pd-kv"><span class="pk">案件状态</span><span class="pv" style="color:var(--warning);font-weight:600;">立案侦查</span></div>
+                <div class="pd-kv"><span class="pk">案件主类别</span><span class="pv">盗窃厂矿、学校、企事业单位案</span></div>
+                <div class="pd-kv"><span class="pk">涉案总价值</span><span class="pv" style="color:var(--error);font-weight:600;">¥9,000</span></div>
+                <div class="pd-kv"><span class="pk">立案单位</span><span class="pv">合肥市公安局庐阳分局</span></div>
+                <div class="pd-kv"><span class="pk">简要案情</span><span class="pv">嫌疑人趁超市营业高峰期盗窃手机一部，案损 3800 元。</span></div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <span class="pd-section-tag pd-tag-purple">AI智能解析</span>
+            <div class="pd-card">
+              <h3>案件基础信息 <span class="tag blue" style="font-size:10px;padding:1px 6px;">置信度 92%</span></h3>
+              <div class="muted-box">
+                <div class="pd-kv"><span class="pk">案件类型</span><span class="pv"><span class="case-item-tag cit-blue">盗窃案</span></span></div>
+                <div class="pd-kv"><span class="pk">案件主类别</span><span class="pv"><span class="case-item-tag cit-purple">盗窃机关单位</span></span></div>
+                <div class="pd-kv"><span class="pk">作案时段</span><span class="pv"><span class="case-item-tag cit-orange">日间（10-17时）</span></span></div>
+                <div class="pd-kv"><span class="pk">作案地域</span><span class="pv"><span class="case-item-tag cit-teal">商业街</span></span></div>
+                <div class="pd-kv"><span class="pk">作案方式</span><span class="pv"><span class="case-item-tag cit-gray">顺手牵羊</span></span></div>
+                <div class="pd-kv"><span class="pk">损失金额</span><span class="pv" style="color:var(--error);font-weight:600;">¥9,000</span></div>
+                <div class="pd-kv"><span class="pk">破案情况</span><span class="pv"><span class="case-item-tag cit-red">未破案</span></span></div>
+              </div>
+            </div>
+            <div class="pd-card" style="margin-top:12px;">
+              <h3 style="display:flex;align-items:center;justify-content:space-between;">被盗抢物品 <span class="link" style="font-size:13px;font-weight:400;" onclick="toggleCaseStolenEdit('drawer')">编辑</span></h3>
+              <div class="muted-box" id="case-stolen-drawer-view">
+                <div class="pd-kv"><span class="pk">类别</span><span class="pv" id="case-stolen-drawer-cats"></span></div>
+                <div class="pd-kv"><span class="pk">具体描述</span><span class="pv" id="case-stolen-drawer-desc" style="white-space:pre-wrap;"></span></div>
+              </div>
+              <div class="muted-box" id="case-stolen-drawer-edit" style="display:none;">
+                <div class="form-row" style="margin-bottom:12px;"><label style="margin-bottom:8px;display:block;">被盗抢物品类别（可多选）</label>
+                  <div id="case-stolen-drawer-checks" class="case-stolen-check-grid"></div>
+                </div>
+                <div class="form-row" style="margin-bottom:0;"><label style="margin-bottom:8px;display:block;">具体描述</label>
+                  <textarea id="case-stolen-drawer-textarea" class="inp w-full" rows="4" style="resize:vertical;font-family:inherit;"></textarea>
+                </div>
+                <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end;">
+                  <button type="button" class="btn" onclick="cancelCaseStolenEdit('drawer')">取消</button>
+                  <button type="button" class="btn primary" onclick="saveCaseStolenEdit('drawer')">保存</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="drawer-bottom-nav"><span>← 上一条</span><span>下一条 →</span></div>
+      </div>
+
+      <div id="drawer-person" class="drawer-pane" style="display:none">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+          <div>
+            <span class="pd-section-tag pd-tag-blue">👤 人员信息</span>
+            <div class="pd-card">
+              <h3>基础信息 <span style="font-size:12px;color:var(--text-light);font-weight:400;">RY3401030012</span></h3>
+              <div class="muted-box">
+                <div class="pd-kv"><span class="pk">姓名</span><span class="pv">李某某</span></div>
+                <div class="pd-kv"><span class="pk">性别</span><span class="pv">男</span></div>
+                <div class="pd-kv"><span class="pk">年龄</span><span class="pv">29 岁</span></div>
+                <div class="pd-kv"><span class="pk">证件号码</span><span class="pv" style="font-family:monospace;font-size:12px;">340XXXXXXXXXXXXXXX</span></div>
+                <div class="pd-kv"><span class="pk">地市</span><span class="pv">合肥市</span></div>
+                <div class="pd-kv"><span class="pk">录入时间</span><span class="pv">2026-03-25 14:23:01</span></div>
+                <div class="pd-kv"><span class="pk">涉案数</span><span class="pv" style="color:var(--error);font-weight:600;">7 起</span></div>
+                <div class="pd-kv"><span class="pk">案件类别</span><span class="pv"><span class="tag red">刑事 5起</span> <span class="tag blue">行政 2起</span></span></div>
+                <div class="pd-kv"><span class="pk">涉案主类别</span><span class="pv">盗窃机关单位案</span></div>
+                <div class="pd-kv"><span class="pk">强制处置措施</span><span class="pv"><span class="tag orange">行政拘留</span></span></div>
+                <div class="pd-kv"><span class="pk">当前强制措施</span><span class="pv">取保候审</span></div>
+                <div class="pd-kv"><span class="pk">执行单位</span><span class="pv">合肥市公安局庐阳分局逍遥津派出所</span></div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <span class="pd-section-tag pd-tag-orange">📁 涉案信息</span>
+            <div class="pd-card">
+              <h3>关联案件 <span style="font-size:12px;color:var(--text-light);font-weight:400;">共 7 起</span></h3>
+              <div class="pd-case-card">
+                <div>
+                  <div style="font-size:11px;font-family:monospace;color:var(--text-light);">A3401035000002025100823</div>
+                  <div class="pd-case-title" style="font-size:14px;">XX 手机被盗案</div>
+                  <div class="pd-case-meta">2025-11-30 · 庐阳区</div>
+                </div>
+                <div class="pd-case-right">
+                  <div style="font-size:14px;font-weight:600;color:var(--error);">¥9,000</div>
+                  <span class="pd-case-status" style="font-size:11px;"><span class="tag orange"><span class="dot" style="background:#faad14"></span>未破案</span></span>
+                </div>
+              </div>
+              <div class="pd-case-card">
+                <div>
+                  <div style="font-size:11px;font-family:monospace;color:var(--text-light);">A3401035000002025090412</div>
+                  <div class="pd-case-title" style="font-size:14px;">XX 笔记本电脑被盗案</div>
+                  <div class="pd-case-meta">2025-09-15 · 蜀山区</div>
+                </div>
+                <div class="pd-case-right">
+                  <div style="font-size:14px;font-weight:600;color:var(--error);">¥8,500</div>
+                  <span class="pd-case-status" style="font-size:11px;"><span class="tag orange"><span class="dot" style="background:#faad14"></span>未破案</span></span>
+                </div>
+              </div>
+              <div class="pd-case-card">
+                <div>
+                  <div style="font-size:11px;font-family:monospace;color:var(--text-light);">A3401035000002025070256</div>
+                  <div class="pd-case-title" style="font-size:14px;">商场扒窃案</div>
+                  <div class="pd-case-meta">2025-07-08 · 包河区</div>
+                </div>
+                <div class="pd-case-right">
+                  <div style="font-size:14px;font-weight:600;color:var(--error);">¥3,200</div>
+                  <span class="pd-case-status" style="font-size:11px;"><span class="tag green"><span class="dot" style="background:#52c41a"></span>已破案</span></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="drawer-bottom-nav"><span>← 上一条</span><span>下一条 →</span></div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Modal overlay -->
+  <div class="modal-overlay" id="modalOverlay" onclick="closeAllModals()"></div>
+
+  <div class="modal" id="userModal">
+    <div class="modal-head">新增/编辑用户 <button class="btn" onclick="closeModal('userModal')" style="width:32px;height:32px;padding:0;">×</button></div>
+    <div class="modal-body">
+      <div class="form-row"><label>用户名 *</label><input class="inp w-full" placeholder="请输入用户名" /></div>
+      <div class="form-row"><label>密码 *</label><input class="inp w-full" type="password" placeholder="请输入密码" /></div>
+      <div class="form-row"><label>所属组织 *</label><select class="sel w-full"><option>安徽省公安厅</option><option>合肥市公安局</option></select></div>
+      <div class="form-row"><label>角色 *</label><select class="sel w-full"><option>系统管理员</option><option>数据分析员</option><option>普通用户</option></select></div>
+      <div class="form-row"><label>状态</label><select class="sel w-full"><option>启用</option><option>禁用</option></select></div>
+    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal('userModal')">取消</button><button class="btn primary" onclick="closeModal('userModal')">确定</button></div>
+  </div>
+
+  <div class="modal" id="pwdModal">
+    <div class="modal-head">修改密码 <button class="btn" onclick="closeModal('pwdModal')" style="width:32px;height:32px;padding:0;">×</button></div>
+    <div class="modal-body">
+      <div class="form-row"><label>旧密码</label><input class="inp w-full" type="password" /></div>
+      <div class="form-row"><label>新密码</label><input class="inp w-full" type="password" /></div>
+      <div class="form-row"><label>确认密码</label><input class="inp w-full" type="password" /></div>
+    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal('pwdModal')">取消</button><button class="btn primary" onclick="closeModal('pwdModal')">保存</button></div>
+  </div>
+
+  <div class="modal" id="orgModal">
+    <div class="modal-head">添加组织 <button class="btn" onclick="closeModal('orgModal')" style="width:32px;height:32px;padding:0;">×</button></div>
+    <div class="modal-body">
+      <div class="form-row"><label>上级组织</label><select class="sel w-full"><option>安徽省公安厅</option><option>合肥市公安局</option></select></div>
+      <div class="form-row"><label>组织名称</label><input class="inp w-full" placeholder="请输入组织名称" /></div>
+      <div class="form-row"><label>组织编码</label><input class="inp w-full" placeholder="请输入组织编码" /></div>
+    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal('orgModal')">取消</button><button class="btn primary" onclick="closeModal('orgModal')">确定</button></div>
+  </div>
+
+  <div class="modal" id="roleModal">
+    <div class="modal-head">新增角色 <button class="btn" onclick="closeModal('roleModal')" style="width:32px;height:32px;padding:0;">×</button></div>
+    <div class="modal-body">
+      <div class="form-row"><label>角色名称</label><input class="inp w-full" placeholder="请输入角色名称" /></div>
+      <div class="form-row"><label>权限设置</label>
+        <div style="border:1px solid var(--border);border-radius:6px;padding:12px;line-height:2;">
+          <label style="display:inline-block;margin:0;"><input type="checkbox" checked> 警情列表</label>
+          <label style="display:inline-block;margin:0 0 0 16px;"><input type="checkbox" checked> 警情列表</label>
+          <label style="display:inline-block;margin:0 0 0 16px;"><input type="checkbox" checked> 案件列表</label><br>
+          <label style="display:inline-block;margin:8px 0 0;"><input type="checkbox" checked> 人员列表</label>
+          <label style="display:inline-block;margin:8px 0 0 16px;"><input type="checkbox" checked> 报表管理</label>
+          <label style="display:inline-block;margin:8px 0 0 16px;"><input type="checkbox"> 权限管理</label>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal('roleModal')">取消</button><button class="btn primary" onclick="closeModal('roleModal')">确定</button></div>
+  </div>
+
+  <div class="modal" id="feedbackModal">
+    <div class="modal-head">意见反馈 <button class="btn" onclick="closeModal('feedbackModal')" style="width:32px;height:32px;padding:0;">×</button></div>
+    <div class="modal-body">
+      <div class="form-row"><label>反馈内容</label><textarea placeholder="请输入意见或问题描述"></textarea></div>
+      <div class="form-row"><label>联系方式（可选）</label><input class="inp w-full" placeholder="手机号/邮箱" /></div>
+    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal('feedbackModal')">取消</button><button class="btn primary" onclick="closeModal('feedbackModal')">提交</button></div>
+  </div>
+
+  <div class="modal" id="aboutModal">
+    <div class="modal-head">关于侵财助手 <button class="btn" onclick="closeModal('aboutModal')" style="width:32px;height:32px;padding:0;">×</button></div>
+    <div class="modal-body" style="line-height:1.8;color:var(--text);">
+      <div><b>侵财助手（QC Assistant）</b></div>
+      <div style="margin-top:8px;">版本：v1.0.0</div>
+      <div>构建时间：2026-03-27</div>
+      <div style="margin-top:8px;">用于侵财类警情案件分析、报表统计与权限管理。</div>
+      <div style="margin-top:12px;color:var(--text-secondary);font-size:13px;">© 2026 公安业务智能分析平台</div>
+    </div>
+    <div class="modal-foot"><button class="btn primary" onclick="closeModal('aboutModal')">知道了</button></div>
+  </div>
+
+  <div class="modal modal-wide" id="reportAnalysisModal">
+    <div class="modal-head">报告详情（示例数据） <button class="btn" onclick="closeModal('reportAnalysisModal')" style="width:32px;height:32px;padding:0;">×</button></div>
+    <div class="modal-body report-doc">
+      <div style="text-align:center;margin-bottom:8px;"><strong style="font-size:18px;">安徽省侵财类警情案件分析报告</strong></div>
+      <div class="report-lead" style="text-align:center;">统计周期：2026 年 3 月 19 日 — 2026 年 3 月 25 日（以 3 月 25 日为截止日） · 口径：已受理并完成解析的侵财类警情 / 案件</div>
+
+      <h2>一、警情分析</h2>
+
+      <h3>（一）地市变化</h3>
+      <p>本周全省侵财类警情共计 <strong>1,736</strong> 条，环比上周（1,847 条）下降 <strong>6.0%</strong>；同比去年同期（1,902 条）下降 <strong>8.7%</strong>。警情地域集中度仍较高：<strong>合肥（324）</strong>、<strong>阜阳（287）</strong>、<strong>芜湖（215）</strong>三地合计占全省 <strong>47.8%</strong>。</p>
+      <table>
+        <thead><tr><th>地市</th><th>本周警情</th><th>环比</th><th>同比</th><th>占全省比重</th></tr></thead>
+        <tbody>
+          <tr><td>合肥</td><td>324</td><td>-5.3%</td><td>-7.9%</td><td>18.7%</td></tr>
+          <tr><td>阜阳</td><td>287</td><td>-8.1%</td><td>-11.2%</td><td>16.5%</td></tr>
+          <tr><td>芜湖</td><td>215</td><td>+2.4%</td><td>-4.6%</td><td>12.4%</td></tr>
+          <tr><td>安庆</td><td>198</td><td>-3.0%</td><td>-9.8%</td><td>11.4%</td></tr>
+          <tr><td>其他地市合计</td><td>712</td><td>-6.8%</td><td>-8.1%</td><td>41.0%</td></tr>
+          <tr><th>全省合计</th><th>1,736</th><th>-6.0%</th><th>-8.7%</th><th>100%</th></tr>
+        </tbody>
+      </table>
+
+      <h3>（二）案件类型</h3>
+      <p>刑事类警情 <strong>1,214</strong> 条（占 <strong>69.9%</strong>），行政类 <strong>522</strong> 条（占 <strong>30.1%</strong>）。刑事占比较上周上升 <strong>1.2 个百分点</strong>，与商户、车库等重点部位夜间盗窃抬头相关。</p>
+      <ul>
+        <li>刑事类热点：入户盗窃（估算占比 <strong>22%</strong>）、盗窃车内财物（<strong>18%</strong>）、盗窃非机动车（<strong>17%</strong>）。</li>
+        <li>行政类热点：顺手牵羊、数额较小财物纠纷转化警情占比上升，合计约占行政侵财警情的 <strong>41%</strong>。</li>
+      </ul>
+
+      <h3>（三）类案警情分析</h3>
+      <p>「盗窃非机动车 + 商户沿街」串并线索本周新增 <strong>37</strong> 条，立案关联案件 <strong>14</strong> 起；技术手段开锁类警情环比增加 <strong>9 条</strong>，集中时段为 <strong>22:00—次日 02:00</strong>，高发路段为开放式小区外围与城中村巷道。</p>
+      <table>
+        <thead><tr><th>类案标签</th><th>警情数</th><th>环比</th><th>备注</th></tr></thead>
+        <tbody>
+          <tr><td>电动车 / 电瓶被盗</td><td>286</td><td>-4%</td><td>未上锁、临时停放占比高</td></tr>
+          <tr><td>沿街商铺被盗</td><td>174</td><td>+6%</td><td>技术开锁警情环比上升</td></tr>
+          <tr><td>车内财物被盗</td><td>208</td><td>-2%</td><td>服务区、商圈停车场多发</td></tr>
+        </tbody>
+      </table>
+
+      <h3>（四）问题警情</h3>
+      <p>本周标注「要素不全 / 重复入库 / 管辖争议」等问题警情 <strong>63</strong> 条，占全部侵财警情 <strong>3.6%</strong>。其中重复入库 <strong>18</strong> 条（同比降 <strong>12%</strong>），要素不全 <strong>31</strong> 条（地址模糊、损失不明为主）。建议强化接警指引与要素回填校验。</p>
+
+      <h2>二、案件分析</h2>
+
+      <h3>（一）刑事案件</h3>
+      <p>全省同期刑事立案（侵财类）<strong>892</strong> 起，破案 <strong>513</strong> 起，破案率 <strong>57.5%</strong>；涉案估值约 <strong>¥2,860 万元</strong>，环比「案均值」下降 <strong>3.2%</strong>（与大额个案减少有关）。刑事拘留 <strong>147</strong> 人，取保候审 <strong>89</strong> 人。</p>
+      <table>
+        <thead><tr><th>指标</th><th>数值</th><th>环比</th><th>同比</th></tr></thead>
+        <tbody>
+          <tr><td>立案数</td><td>892</td><td>-4.1%</td><td>-6.8%</td></tr>
+          <tr><td>破案数</td><td>513</td><td>+1.6%</td><td>-2.3%</td></tr>
+          <tr><td>破案率</td><td>57.5%</td><td>+3.3pp</td><td>+1.1pp</td></tr>
+          <tr><td>千人立案（估算）</td><td>0.138</td><td>-0.006</td><td>-0.011</td></tr>
+        </tbody>
+      </table>
+
+      <h3>（二）行政案件</h3>
+      <p>行政（侵财）受理 <strong>418</strong> 件，办结 <strong>362</strong> 件，在办 <strong>56</strong> 件，办结率 <strong>86.6%</strong>；环比办结率上升 <strong>2.4 个百分点</strong>。小额财物案件调解结案占比 <strong>54%</strong>。</p>
+
+      <h3>（三）作案人员分析</h3>
+      <p>抓获侵财类违法犯罪嫌疑人 <strong>387</strong> 名（刑事 + 行政并集去重后约 <strong>355</strong>）。年龄分布：<strong>18—35 岁</strong>占 <strong>61%</strong>；前科人员占比 <strong>34%</strong>；团伙作案线索 <strong>42</strong> 条，同比上升 <strong>8%</strong>。职业登记为「无固定职业」占比最高（<strong>48%</strong>），其次为务工（<strong>22%</strong>）。</p>
+
+      <p style="margin-top:20px;color:var(--text-secondary);font-size:12px;">说明：本页为界面设计稿填充的示例数据，正式环境由数据库实时汇总生成 Word（《侵财测试报告_提取模版.docx》）。</p>
+    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal('reportAnalysisModal')">关闭</button><button class="btn primary" onclick="closeModal('reportAnalysisModal')">导出 Word</button></div>
+  </div>
+
+  <script>
+    const pageMap = {
+      police: '警情列表',
+      cases: '案件列表',
+      personnel: '人员列表',
+      reports: '报表管理',
+      permissions: '权限管理'
+    };
+
+    document.querySelectorAll('.nav-item').forEach(item => {
+      item.addEventListener('click', () => {
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        item.classList.add('active');
+        const p = item.dataset.page;
+        document.querySelectorAll('.page').forEach(pg => pg.classList.remove('active'));
+        document.getElementById('page-' + p).classList.add('active');
+        document.getElementById('crumb').textContent = pageMap[p];
+      });
+    });
+
+    function bindTabs(containerId) {
+      const box = document.getElementById(containerId);
+      if (!box) return;
+      box.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          box.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          const target = tab.dataset.target;
+          const parent = box.parentElement;
+          parent.querySelectorAll(':scope > .subpane').forEach(p => p.classList.remove('active'));
+          const el = document.getElementById(target);
+          if (el) el.classList.add('active');
+        });
+      });
+    }
+    bindTabs('caseTabs');
+    bindTabs('reportTabs');
+    bindTabs('permTabs');
+
+    const userToggle = document.getElementById('userToggle');
+    const userMenu = document.getElementById('userMenu');
+    userToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      userMenu.classList.toggle('show');
+    });
+    document.addEventListener('click', () => userMenu.classList.remove('show'));
+
+    userMenu.querySelectorAll('[data-modal]').forEach(it => {
+      it.addEventListener('click', () => openModal(it.dataset.modal));
+    });
+
+    const drawer = document.getElementById('drawer');
+    const drawerOverlay = document.getElementById('drawerOverlay');
+    function openDrawer(type) {
+      drawerOverlay.classList.add('show');
+      drawer.classList.add('show');
+      drawer.querySelectorAll('.drawer-pane').forEach(p => p.style.display = 'none');
+      document.getElementById('drawer-' + type).style.display = 'block';
+      const titleMap = { police: '警情详情页', case: '案件详情页', person: '作案人员详情页' };
+      document.getElementById('drawerTitle').textContent = titleMap[type] || '详情';
+    }
+    function closeDrawer() {
+      drawerOverlay.classList.remove('show');
+      drawer.classList.remove('show');
+    }
+
+
+
+    function openDetailPage(type) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById('page-' + type + '-detail').classList.add('active');
+      const titles = { police: '警情详情', case: '案件详情', person: '人员详情' };
+      document.getElementById('crumb').textContent = titles[type];
+    }
+
+    function backToList(page) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById('page-' + page).classList.add('active');
+      document.getElementById('crumb').textContent = pageMap[page];
+    }
+
+    const modalOverlay = document.getElementById('modalOverlay');
+    function openModal(id) {
+      modalOverlay.classList.add('show');
+      document.getElementById(id).classList.add('show');
+    }
+    function closeModal(id) {
+      const m = document.getElementById(id);
+      if (m) m.classList.remove('show');
+      if (!document.querySelector('.modal.show')) modalOverlay.classList.remove('show');
+    }
+    function closeAllModals() {
+      document.querySelectorAll('.modal').forEach(m => m.classList.remove('show'));
+      modalOverlay.classList.remove('show');
+    }
+
+    function reloadItem(el) {
+      const tr = el.closest('tr');
+      tr.querySelector('td:nth-child(6)').innerHTML = '<span class="tag orange"><span class="dot" style="background:#faad14"></span>解析中</span>';
+      el.textContent = '处理中';
+      el.style.pointerEvents = 'none';
+      setTimeout(() => {
+        tr.querySelector('td:nth-child(6)').innerHTML = '<span class="tag green"><span class="dot" style="background:#52c41a"></span>成功</span>';
+        el.textContent = '查看详情';
+        el.style.pointerEvents = 'auto';
+        el.onclick = () => openDrawer('police');
+      }, 1200);
+    }
+
+    function startReportProgress() {
+      const label = document.getElementById('reportProgress');
+      const steps = ['数据提取中...', '统计汇总中...', '生成图表描述...', '拼装报告章节...', '报告生成完成 ✓'];
+      let i = 0;
+      label.textContent = steps[i];
+      const timer = setInterval(() => {
+        i++;
+        label.textContent = steps[i] || steps[steps.length - 1];
+        if (i >= steps.length - 1) clearInterval(timer);
+      }, 800);
+    }
+
+    const STATS_CITIES = ['合肥','阜阳','芜湖','安庆','蚌埠','六安','宿州','滁州','马鞍山','宣城','铜陵','亳州','池州','淮北','淮南','黄山'];
+
+ // --- 报表管理核心逻辑更新开始 ---
+    function parseReportMonth(iso) {
+      var parts = (iso || '2026-05').split('-');
+      var y = parseInt(parts[0], 10);
+      var m = parseInt(parts[1], 10);
+      var py = m === 1 ? y - 1 : y;
+      var pm = m === 1 ? 12 : m - 1;
+      function lbl(year, month) { return year + '年' + (month < 10 ? '0'+month : month) + '月'; }
+      return {
+        labelCur: lbl(y, m),
+        labelPrev: lbl(py, pm),
+        labelYoy: lbl(y - 1, m)
+      };
+    }
+
+    function solvedRate(cnt, po) {
+      if (!cnt) return '—';
+      return (po / cnt * 100).toFixed(1);
+    }
+
+    function pctDelta(cur, base) {
+      if (base === 0 || base == null || base === undefined) return '—';
+      var p = (cur - base) / base * 100;
+      return (p > 0 ? '+' : '') + p.toFixed(1) + '%';
+    }
+    
+    // 新增：计算差值函数
+    function numDelta(cur, base) {
+      if (base === 0 || base == null || base === undefined) return '—';
+      var d = cur - base;
+      return (d > 0 ? '+' : '') + d;
+    }
+
+    function ratePPDelta(curCnt, curPo, baseCnt, basePo) {
+      var r1 = curCnt ? curPo / curCnt * 100 : 0;
+      var r0 = baseCnt ? basePo / baseCnt * 100 : 0;
+      if (!baseCnt && !curCnt) return '—';
+      var d = r1 - r0;
+      return (d >= 0 ? '+' : '') + d.toFixed(1) + 'pp';
+    }
+
+ function theadPoliceCityMonth(lc) {
+      return '<tr><th rowspan="2" class="h-dark">市局</th>' +
+        '<th colspan="3" class="h-blue">' + lc + '数据</th>' +
+        '<th colspan="6" class="h-pink">环比 (MoM)</th>' +
+        '<th colspan="6" class="h-orange">同比 (YoY)</th></tr>' +
+        '<tr>' +
+        '<th class="h-blue">刑事</th><th class="h-blue">行政</th><th class="h-blue">合计</th>' +
+        '<th class="h-pink">刑事%</th><th class="h-pink">刑事差</th><th class="h-pink">行政%</th><th class="h-pink">行政差</th><th class="h-pink">合计%</th><th class="h-pink">合计差</th>' +
+        '<th class="h-orange">刑事%</th><th class="h-orange">刑事差</th><th class="h-orange">行政%</th><th class="h-orange">行政差</th><th class="h-orange">合计%</th><th class="h-orange">合计差</th>' +
+        '</tr>';
+    }
+
+function theadCriminalMonth(lc, dimLabel) {
+      return '<tr>' +
+        // 第一列：动态维度名称（案件类别 或 地市）
+        '<th rowspan="2" class="h-dark">' + dimLabel + '</th>' +
+        '<th colspan="3" class="h-blue">' + lc + ' 数据</th>' +
+        '<th colspan="3" class="h-orange">同比 (%)</th>' +
+        '<th colspan="3" class="h-pink">环比 (%)</th>' +
+        '<th colspan="2" class="h-orange">同比差值</th>' +
+        '<th colspan="2" class="h-pink">环比差值</th>' +
+        '</tr>' +
+        '<tr>' +
+        // 当期数据 (3列)
+        '<th class="h-blue">案件数</th><th class="h-blue">破案数</th><th class="h-blue">破案率</th>' +
+        // 同比 (%) (3列)
+        '<th class="h-orange">案件数</th><th class="h-orange">破案数</th><th class="h-orange">破案率</th>' +
+        // 环比 (%) (3列)
+        '<th class="h-pink">案件数</th><th class="h-pink">破案数</th><th class="h-pink">破案率</th>' +
+        // 同比差值 (2列)
+        '<th class="h-orange">案件数</th><th class="h-orange">破案数</th>' +
+        // 环比差值 (2列)
+        '<th class="h-pink">案件数</th><th class="h-pink">破案数</th>' +
+        '</tr>';
+    }
+
+function theadAdminMonth(lc, dimLabel) {
+      return '<tr>' +
+        // 第一列：动态维度名称（地市 或 案件类别）
+        '<th rowspan="2" class="h-dark">' + dimLabel + '</th>' +
+        '<th colspan="3" class="h-blue">' + lc + ' 数据</th>' +
+        '<th colspan="3" class="h-orange">同比 (%)</th>' +
+        '<th colspan="3" class="h-pink">环比 (%)</th>' +
+        '<th colspan="2" class="h-orange">同比差值</th>' +
+        '<th colspan="2" class="h-pink">环比差值</th>' +
+        '</tr>' +
+        '<tr>' +
+        // 当期数据 (3列)
+        '<th class="h-blue">受理数</th><th class="h-blue">办结数</th><th class="h-blue">办结率</th>' +
+        // 同比 (%) (3列)
+        '<th class="h-orange">受理数</th><th class="h-orange">办结数</th><th class="h-orange">办结率</th>' +
+        // 环比 (%) (3列)
+        '<th class="h-pink">受理数</th><th class="h-pink">办结数</th><th class="h-pink">办结率</th>' +
+        // 同比差值 (2列)
+        '<th class="h-orange">受理数</th><th class="h-orange">办结数</th>' +
+        // 环比差值 (2列)
+        '<th class="h-pink">受理数</th><th class="h-pink">办结数</th>' +
+        '</tr>';
+    }
+
+function rowPoliceCityMonth(r) {
+      function tot(x) { return x.criminal + x.admin; }
+      var curT = tot(r.cur);
+      var prevT = tot(r.prev);
+      var yoyT = tot(r.yoy);
+      
+      // 颜色格式化辅助
+      function fmtColor(val, isRate) {
+        var str = isRate ? pctDelta(val.c, val.b) : numDelta(val.c, val.b);
+        var color = val.c > val.b ? 'var(--error)' : (val.c < val.b ? 'var(--success)' : 'inherit');
+        return '<span style="color:' + color + '">' + str + '</span>';
+      }
+
+      return '<tr><td style="text-align:left;font-weight:500;">' + r.city + '</td>' +
+        '<td>' + r.cur.criminal + '</td><td>' + r.cur.admin + '</td><td style="font-weight:600;">' + curT + '</td>' +
+        // 环比部分
+        '<td>' + fmtColor({c: r.cur.criminal, b: r.prev.criminal}, true) + '</td><td>' + numDelta(r.cur.criminal, r.prev.criminal) + '</td>' +
+        '<td>' + fmtColor({c: r.cur.admin, b: r.prev.admin}, true) + '</td><td>' + numDelta(r.cur.admin, r.prev.admin) + '</td>' +
+        '<td>' + fmtColor({c: curT, b: prevT}, true) + '</td><td>' + numDelta(curT, prevT) + '</td>' +
+        // 同比部分
+        '<td>' + fmtColor({c: r.cur.criminal, b: r.yoy.criminal}, true) + '</td><td>' + numDelta(r.cur.criminal, r.yoy.criminal) + '</td>' +
+        '<td>' + fmtColor({c: r.cur.admin, b: r.yoy.admin}, true) + '</td><td>' + numDelta(r.cur.admin, r.yoy.admin) + '</td>' +
+        '<td>' + fmtColor({c: curT, b: yoyT}, true) + '</td><td>' + numDelta(curT, yoyT) + '</td>' +
+        '</tr>';
+    }
+
+function rowCriminalMomYoy(leftTd, t) {
+      var c = t.cur;
+      var p = t.prev;
+      var y = t.yoy;
+
+      // 破案率辅助计算
+      var curRate = c.cnt ? (c.po / c.cnt * 100) : 0;
+      var prevRate = p.cnt ? (p.po / p.cnt * 100) : 0;
+      var yoyRate = y.cnt ? (y.po / y.cnt * 100) : 0;
+
+      // 颜色格式化辅助（百分比增幅）
+      function fmtColor(valC, valB) {
+        var str = pctDelta(valC, valB);
+        var color = valC > valB ? 'var(--error)' : (valC < valB ? 'var(--success)' : 'inherit');
+        return '<span style="color:' + color + '">' + str + '</span>';
+      }
+
+      // 数值差值变色格式化
+      function fmtNumDiff(valC, valB) {
+        var str = numDelta(valC, valB);
+        var color = valC > valB ? 'var(--error)' : (valC < valB ? 'var(--success)' : 'inherit');
+        return '<span style="color:' + color + '">' + str + '</span>';
+      }
+      
+      // 破案率百分点差值 (pp)
+      function fmtRateDiff(r1, r0, hasBase) {
+         if (!hasBase) return '—';
+         var d = r1 - r0;
+         var color = d > 0 ? 'var(--error)' : (d < 0 ? 'var(--success)' : 'inherit');
+         var str = (d > 0 ? '+' : '') + d.toFixed(1) + 'pp';
+         return '<span style="color:' + color + '">' + str + '</span>';
+      }
+
+      return '<tr>' + leftTd +
+        // 1. 当期数据 (3列)
+        '<td>' + c.cnt + '</td><td>' + c.po + '</td><td style="font-weight:600;">' + curRate.toFixed(1) + '%</td>' +
+        
+        // 2. 同比 (%) (3列)
+        '<td>' + fmtColor(c.cnt, y.cnt) + '</td>' +
+        '<td>' + fmtColor(c.po, y.po) + '</td>' +
+        '<td>' + fmtRateDiff(curRate, yoyRate, y.cnt > 0) + '</td>' +
+        
+        // 3. 环比 (%) (3列)
+        '<td>' + fmtColor(c.cnt, p.cnt) + '</td>' +
+        '<td>' + fmtColor(c.po, p.po) + '</td>' +
+        '<td>' + fmtRateDiff(curRate, prevRate, p.cnt > 0) + '</td>' +
+        
+        // 4. 同比差值 (2列)
+        '<td style="font-weight:500;">' + fmtNumDiff(c.cnt, y.cnt) + '</td>' +
+        '<td style="font-weight:500;">' + fmtNumDiff(c.po, y.po) + '</td>' +
+        
+        // 5. 环比差值 (2列)
+        '<td style="font-weight:500;">' + fmtNumDiff(c.cnt, p.cnt) + '</td>' +
+        '<td style="font-weight:500;">' + fmtNumDiff(c.po, p.po) + '</td>' +
+        '</tr>';
+    }
+
+    function adminClosureRate(sl, bj) {
+      return sl ? bj / sl * 100 : 0;
+    }
+
+   function rowAdminMomYoy(leftTd, r) {
+      var c = r.cur;
+      var p = r.prev;
+      var y = r.yoy;
+
+      // 办结率辅助计算
+      var curRate = c.sl ? (c.bj / c.sl * 100) : 0;
+      var prevRate = p.sl ? (p.bj / p.sl * 100) : 0;
+      var yoyRate = y.sl ? (y.bj / y.sl * 100) : 0;
+
+      // 百分比增幅变色
+      function fmtColor(valC, valB) {
+        var str = pctDelta(valC, valB);
+        var color = valC > valB ? 'var(--error)' : (valC < valB ? 'var(--success)' : 'inherit');
+        return '<span style="color:' + color + '">' + str + '</span>';
+      }
+
+      // 数值差值变色
+      function fmtNumDiff(valC, valB) {
+        var str = numDelta(valC, valB);
+        var color = valC > valB ? 'var(--error)' : (valC < valB ? 'var(--success)' : 'inherit');
+        return '<span style="color:' + color + '">' + str + '</span>';
+      }
+      
+      // 办结率百分点差值 (pp)
+      function fmtRateDiff(r1, r0, hasBase) {
+         if (!hasBase) return '—';
+         var d = r1 - r0;
+         var color = d > 0 ? 'var(--error)' : (d < 0 ? 'var(--success)' : 'inherit');
+         var str = (d > 0 ? '+' : '') + d.toFixed(1) + 'pp';
+         return '<span style="color:' + color + '">' + str + '</span>';
+      }
+
+      return '<tr>' + leftTd +
+        // 1. 当期数据
+        '<td>' + c.sl + '</td><td>' + c.bj + '</td><td style="font-weight:600;">' + curRate.toFixed(1) + '%</td>' +
+        
+        // 2. 同比 (%)
+        '<td>' + fmtColor(c.sl, y.sl) + '</td>' +
+        '<td>' + fmtColor(c.bj, y.bj) + '</td>' +
+        '<td>' + fmtRateDiff(curRate, yoyRate, y.sl > 0) + '</td>' +
+        
+        // 3. 环比 (%)
+        '<td>' + fmtColor(c.sl, p.sl) + '</td>' +
+        '<td>' + fmtColor(c.bj, p.bj) + '</td>' +
+        '<td>' + fmtRateDiff(curRate, prevRate, p.sl > 0) + '</td>' +
+        
+        // 4. 同比差值
+        '<td style="font-weight:500;">' + fmtNumDiff(c.sl, y.sl) + '</td>' +
+        '<td style="font-weight:500;">' + fmtNumDiff(c.bj, y.bj) + '</td>' +
+        
+        // 5. 环比差值
+        '<td style="font-weight:500;">' + fmtNumDiff(c.sl, p.sl) + '</td>' +
+        '<td style="font-weight:500;">' + fmtNumDiff(c.bj, p.bj) + '</td>' +
+        '</tr>';
+    }
+
+    function sumCriminalTriple(rows) {
+      var cur = { cnt: 0, po: 0 };
+      var prev = { cnt: 0, po: 0 };
+      var yoy = { cnt: 0, po: 0 };
+      rows.forEach(function (r) {
+        cur.cnt += r.cur.cnt; cur.po += r.cur.po;
+        prev.cnt += r.prev.cnt; prev.po += r.prev.po;
+        yoy.cnt += r.yoy.cnt; yoy.po += r.yoy.po;
+      });
+      return { cur: cur, prev: prev, yoy: yoy };
+    }
+
+    function sumAdminTriple(rows) {
+      var cur = { sl: 0, bj: 0, zb: 0 };
+      var prev = { sl: 0, bj: 0, zb: 0 };
+      var yoy = { sl: 0, bj: 0, zb: 0 };
+      rows.forEach(function (r) {
+        cur.sl += r.cur.sl; cur.bj += r.cur.bj; cur.zb += r.cur.zb;
+        prev.sl += r.prev.sl; prev.bj += r.prev.bj; prev.zb += r.prev.zb;
+        yoy.sl += r.yoy.sl; yoy.bj += r.yoy.bj; yoy.zb += r.yoy.zb;
+      });
+      return { cur: cur, prev: prev, yoy: yoy };
+    }
+
+    var STATS_SHEET = { police: 'police-subcat', criminal: 'crim-cat', admin: 'adm-city' };
+
+    var POLICE_SUBCAT_ROWS = [
+      { label: '盗窃非机动车', cur: 612, prev: 648, yoy: 588 },
+      { label: '盗窃商户', cur: 284, prev: 268, yoy: 302 },
+      { label: '入户盗窃', cur: 418, prev: 441, yoy: 395 },
+      { label: '盗窃车内财物', cur: 356, prev: 338, yoy: 371 },
+      { label: '盗窃工地', cur: 142, prev: 136, yoy: 155 },
+      { label: '盗窃快递物品', cur: 198, prev: 205, yoy: 176 },
+      { label: '其他盗窃', cur: 226, prev: 218, yoy: 239 }
+    ];
+
+    var POLICE_CITY_ROWS = STATS_CITIES.map(function (name, i) {
+      var tot = 228 - i * 12;
+      var cr = Math.round(tot * 0.705);
+      var ad = tot - cr;
+      var prevTot = Math.round(tot * 1.035);
+      var prevCr = Math.round(prevTot * 0.698);
+      var yoyTot = Math.round(tot * 0.965);
+      var yoyCr = Math.round(yoyTot * 0.712);
+      return {
+        city: name,
+        cur: { criminal: cr, admin: ad },
+        prev: { criminal: prevCr, admin: prevTot - prevCr },
+        yoy: { criminal: yoyCr, admin: yoyTot - yoyCr }
+      };
+    });
+
+    var CRIM_CAT_ROWS = [
+      { label: '盗窃', cur: { cnt: 928, po: 582 }, prev: { cnt: 950, po: 590 }, yoy: { cnt: 871, po: 538 } },
+      { label: '抢劫', cur: { cnt: 42, po: 28 }, prev: { cnt: 38, po: 25 }, yoy: { cnt: 45, po: 29 } },
+      { label: '抢夺', cur: { cnt: 28, po: 17 }, prev: { cnt: 31, po: 18 }, yoy: { cnt: 26, po: 15 } },
+      { label: '诈骗', cur: { cnt: 186, po: 72 }, prev: { cnt: 198, po: 76 }, yoy: { cnt: 204, po: 68 } },
+      { label: '敲诈勒索', cur: { cnt: 56, po: 38 }, prev: { cnt: 52, po: 35 }, yoy: { cnt: 49, po: 31 } },
+      { label: '故意毁坏财物', cur: { cnt: 74, po: 48 }, prev: { cnt: 69, po: 46 }, yoy: { cnt: 71, po: 44 } },
+      { label: '其他侵财', cur: { cnt: 63, po: 36 }, prev: { cnt: 60, po: 34 }, yoy: { cnt: 58, po: 33 } }
+    ];
+
+    var CRIM_CITY_ROWS = STATS_CITIES.map(function (name, i) {
+      var cnt = 118 - i * 6;
+      var po = Math.round(cnt * 0.62);
+      var prevCnt = Math.max(1, cnt + 4 + (i % 3));
+      var prevPo = Math.round(prevCnt * (po / cnt) * 0.97);
+      var yoyCnt = Math.max(1, cnt - 3 - (i % 4));
+      var yoyPo = Math.round(yoyCnt * (po / cnt) * 1.03);
+      return {
+        city: name,
+        cur: { cnt: cnt, po: po },
+        prev: { cnt: prevCnt, po: prevPo },
+        yoy: { cnt: yoyCnt, po: yoyPo }
+      };
+    });
+
+    var THEFT_CASE_CLASSES = [
+      '盗窃机动车单位案',
+      '盗窃车内财物案',
+      '入户盗窃案',
+      '盗窃商户案',
+      '盗窃非机动车案',
+      '盗窃快递物品案',
+      '盗窃工地案',
+      '盗窃电子产品案',
+      '其他盗窃案'
+    ];
+
+    var CRIM_THEFT_BY_CLASS = {};
+    THEFT_CASE_CLASSES.forEach(function (cls, ci) {
+      CRIM_THEFT_BY_CLASS[cls] = STATS_CITIES.map(function (name, i) {
+        var cnt = Math.max(4, 86 - ci * 5 - i * 3 + (i % 4));
+        var po = Math.round(cnt * (0.54 + (ci % 4) * 0.03));
+        var prevCnt = Math.max(1, cnt + 2 + (i % 5));
+        var prevPo = Math.round(prevCnt * (po / cnt) * 0.96);
+        var yoyCnt = Math.max(1, cnt - 1 - (i % 3));
+        var yoyPo = Math.round(yoyCnt * (po / cnt) * 1.02);
+        return {
+          city: name,
+          cur: { cnt: cnt, po: po },
+          prev: { cnt: prevCnt, po: prevPo },
+          yoy: { cnt: yoyCnt, po: yoyPo }
+        };
+      });
+    });
+
+    var ADMIN_CITY_ROWS = STATS_CITIES.map(function (name, i) {
+      var sl = 54 - Math.floor(i * 2.2);
+      var bj = Math.round(sl * 0.86);
+      var zb = sl - bj;
+      var prevSl = sl + 2;
+      var prevBj = Math.round(prevSl * 0.84);
+      var yoySl = Math.max(1, sl - 1);
+      var yoyBj = Math.round(yoySl * 0.88);
+      return {
+        city: name,
+        cur: { sl: sl, bj: bj, zb: zb },
+        prev: { sl: prevSl, bj: prevBj, zb: prevSl - prevBj },
+        yoy: { sl: yoySl, bj: yoyBj, zb: yoySl - yoyBj }
+      };
+    });
+
+    var ADMIN_CAT_ROWS = [
+      { label: '盗窃', cur: { sl: 312, bj: 268, zb: 44 }, prev: { sl: 298, bj: 260, zb: 38 }, yoy: { sl: 305, bj: 262, zb: 43 } },
+      { label: '诈骗', cur: { sl: 86, bj: 74, zb: 12 }, prev: { sl: 92, bj: 78, zb: 14 }, yoy: { sl: 79, bj: 68, zb: 11 } },
+      { label: '故意损毁财物', cur: { sl: 48, bj: 41, zb: 7 }, prev: { sl: 45, bj: 39, zb: 6 }, yoy: { sl: 51, bj: 43, zb: 8 } },
+      { label: '侵占 / 遗失物', cur: { sl: 36, bj: 31, zb: 5 }, prev: { sl: 34, bj: 29, zb: 5 }, yoy: { sl: 38, bj: 32, zb: 6 } },
+      { label: '其他', cur: { sl: 58, bj: 49, zb: 9 }, prev: { sl: 55, bj: 47, zb: 8 }, yoy: { sl: 61, bj: 52, zb: 9 } }
+    ];
+
+    function syncStatsInnerTabs() {
+      var v = document.getElementById('repType').value;
+      document.getElementById('tabsPolice').style.display = v === 'police-subtype' ? 'flex' : 'none';
+      document.getElementById('tabsCriminal').style.display = v === 'criminal' ? 'flex' : 'none';
+      document.getElementById('tabsAdmin').style.display = v === 'admin' ? 'flex' : 'none';
+      ['tabsPolice', 'tabsCriminal', 'tabsAdmin'].forEach(function (id) {
+        var el = document.getElementById(id);
+        el.querySelectorAll('.tab').forEach(function (t, idx) { t.classList.toggle('active', idx === 0); });
+      });
+      STATS_SHEET.police = 'police-subcat';
+      STATS_SHEET.criminal = 'crim-cat';
+      STATS_SHEET.admin = 'adm-city';
+      updateTheftFilterBar();
+    }
+
+    function updateTheftFilterBar() {
+      var bar = document.getElementById('crimTheftFilterBar');
+      if (!bar) return;
+      var show = document.getElementById('repType').value === 'criminal' && STATS_SHEET.criminal === 'crim-theft';
+      bar.style.display = show ? 'flex' : 'none';
+    }
+
+    function getActiveSheetKey() {
+      var v = document.getElementById('repType').value;
+      if (v === 'police-subtype') return STATS_SHEET.police;
+      if (v === 'criminal') return STATS_SHEET.criminal;
+      return STATS_SHEET.admin;
+    }
+
+    function sheetTitle(repType, sheet) {
+      var map = {
+        'police-subcat': '警情子类统计',
+        'police-city': '市局警情统计',
+        'crim-cat': '案件类别统计',
+        'crim-city': '地市案件统计',
+        'crim-theft': '地市盗窃案件统计',
+        'adm-city': '地市案件统计',
+        'adm-cat': '案件类别统计'
+      };
+      var root = repType === 'police-subtype' ? '警情报表' : repType === 'criminal' ? '刑事案件报表' : '行政案件报表';
+      return root + ' — ' + (map[sheet] || '');
+    }
+
+    // 处理维度切换逻辑
+    document.getElementById('repTimeType').addEventListener('change', function() {
+        var isPeriod = this.value === 'period';
+        document.getElementById('filterMonthWrap').style.display = isPeriod ? 'none' : 'flex';
+        document.getElementById('filterPeriodWrap').style.display = isPeriod ? 'flex' : 'none';
+        renderStatsTable();
+    });
+
+    function renderStatsTable() {
+      var timeType = document.getElementById('repTimeType').value;
+      var isPeriod = timeType === 'period';
+      var M, displayTagStr, rangeLabel;
+
+      if(isPeriod) {
+          var start = document.getElementById('repDateStart').value || '2026-05-02';
+          var end = document.getElementById('repDateEnd').value || '2026-05-09';
+          displayTagStr = start.replace(/-/g,'.') + ' - ' + end.replace(/-/g,'.');
+          // 周期模式下，这里简化处理基准计算，PRD要求重点突出公式
+          M = { labelCur: '当前周期', labelPrev: '上个周期', labelYoy: '去年同期' };
+          rangeLabel = '报表统计期：' + displayTagStr;
+      } else {
+          var monthEl = document.getElementById('repStatsMonth');
+          var iso = monthEl && monthEl.value ? monthEl.value : '2026-05';
+          M = parseReportMonth(iso);
+          displayTagStr = M.labelCur;
+          rangeLabel = '报表统计期：' + M.labelCur + ' · 环比基数期：' + M.labelPrev + ' · 同比基数期：' + M.labelYoy;
+      }
+
+      var rng = document.getElementById('statsMonthRanges');
+      if (rng) rng.textContent = rangeLabel;
+
+      var gt = document.getElementById('statsGenTime');
+      if (gt) {
+        var now = new Date();
+        function p2(n) { return n < 10 ? '0' + n : '' + n; }
+        gt.textContent = '生成时间：' + now.getFullYear() + '-' + p2(now.getMonth() + 1) + '-' + p2(now.getDate()) + ' ' + p2(now.getHours()) + ':' + p2(now.getMinutes());
+      }
+
+      var repType = document.getElementById('repType').value;
+      var sheet = getActiveSheetKey();
+      var titleEl = document.getElementById('statsTitle');
+      var tagEl = document.getElementById('statsTag');
+      var thead = document.getElementById('statsThead');
+      var tbody = document.getElementById('statsBody');
+      var tbl = document.getElementById('statsTableMain');
+      if (!thead || !tbody || !tbl) return;
+
+      titleEl.textContent = sheetTitle(repType, sheet);
+      tagEl.textContent = displayTagStr;
+
+      var lc = displayTagStr;
+      var headHtml = '';
+      var bodyHtml = '';
+      var wide = false;
+
+      // PRD核心修改点：警情子类统计，增加差值列
+      if (repType === 'police-subtype' && sheet === 'police-subcat') {
+        headHtml = '<tr><th class="h-dark">警情子类 (部标)</th>' +
+                   '<th class="h-blue">' + lc + '</th>' +
+                   '<th class="h-purple">占比(%)</th>' +
+                   '<th class="h-pink">环比</th>' +
+                   '<th class="h-pink">环比差值</th>' +
+                   '<th class="h-orange">同比</th>' +
+                   '<th class="h-orange">同比差值</th></tr>';
+        
+        var sumCur = POLICE_SUBCAT_ROWS.reduce(function (a, r) { return a + r.cur; }, 0);
+        var sumPrev = POLICE_SUBCAT_ROWS.reduce(function (a, r) { return a + r.prev; }, 0);
+        var sumYoy = POLICE_SUBCAT_ROWS.reduce(function (a, r) { return a + r.yoy; }, 0);
+        
+        POLICE_SUBCAT_ROWS.forEach(function (r) {
+          var share = sumCur ? (r.cur / sumCur * 100) : 0;
+          bodyHtml += '<tr><td style="text-align:left;font-weight:500;">' + r.label + '</td>' +
+            '<td>' + r.cur + '</td>' +
+            '<td>' + share.toFixed(1) + '</td>' +
+            '<td><span style="color:' + (r.cur > r.prev ? 'var(--error)' : 'var(--success)') + '">' + pctDelta(r.cur, r.prev) + '</span></td>' +
+            '<td>' + numDelta(r.cur, r.prev) + '</td>' +
+            '<td><span style="color:' + (r.cur > r.yoy ? 'var(--error)' : 'var(--success)') + '">' + pctDelta(r.cur, r.yoy) + '</span></td>' +
+            '<td>' + numDelta(r.cur, r.yoy) + '</td></tr>';
+        });
+        
+        bodyHtml += '<tr class="total-row"><td style="text-align:left;"><b>总计</b></td>' +
+          '<td><b>' + sumCur + '</b></td><td>100.0</td>' +
+          '<td>' + pctDelta(sumCur, sumPrev) + '</td>' +
+          '<td>' + numDelta(sumCur, sumPrev) + '</td>' +
+          '<td>' + pctDelta(sumCur, sumYoy) + '</td>' +
+          '<td>' + numDelta(sumCur, sumYoy) + '</td></tr>';
+      } 
+        else if (repType === 'police-subtype' && sheet === 'police-city') {
+        wide = true; // 15列，开启宽表格模式
+        
+        // 按照 PRD 严格重构的 15 列复合表头
+        headHtml = '<tr>' +
+                   '<th rowspan="2" class="h-dark">地市</th>' +
+                   '<th colspan="3" class="h-blue">' + lc + ' 数量</th>' +
+                   '<th colspan="3" class="h-orange">同比 (%)</th>' +
+                   '<th colspan="3" class="h-pink">环比 (%)</th>' +
+                   '<th colspan="3" class="h-purple">占比与比例</th>' +
+                   '<th rowspan="2" class="h-orange">同比差值<br>(合计)</th>' +
+                   '<th rowspan="2" class="h-pink">环比差值<br>(合计)</th>' +
+                   '</tr>' +
+                   '<tr>' +
+                   // 报表月数量
+                   '<th class="h-blue">刑事</th><th class="h-blue">行政</th><th class="h-blue">合计</th>' +
+                   // 同比
+                   '<th class="h-orange">刑事</th><th class="h-orange">行政</th><th class="h-orange">合计</th>' +
+                   // 环比
+                   '<th class="h-pink">刑事</th><th class="h-pink">行政</th><th class="h-pink">合计</th>' +
+                   // 占比
+                   '<th class="h-purple">刑事(%)</th><th class="h-purple">行政(%)</th><th class="h-purple">刑事:行政</th>' +
+                   '</tr>';
+        
+        // 渲染每一行数据
+        POLICE_CITY_ROWS.forEach(function (r) {
+          var curT = r.cur.criminal + r.cur.admin;
+          var prevT = r.prev.criminal + r.prev.admin;
+          var yoyT = r.yoy.criminal + r.yoy.admin;
+          
+          // 计算占比与比例
+          var shareCr = curT > 0 ? (r.cur.criminal / curT * 100).toFixed(1) : 0;
+          var shareAd = curT > 0 ? (r.cur.admin / curT * 100).toFixed(1) : 0;
+          var ratioStr = r.cur.criminal + ':' + r.cur.admin; // 刑事:行政 比例
+
+          bodyHtml += '<tr>' +
+            '<td style="text-align:left;font-weight:500;">' + r.city + '</td>' +
+            // 1. 当月数量
+            '<td>' + r.cur.criminal + '</td><td>' + r.cur.admin + '</td><td style="font-weight:600;">' + curT + '</td>' +
+            
+            // 2. 同比 (%)
+            '<td><span style="color:' + (r.cur.criminal > r.yoy.criminal ? 'var(--error)' : 'var(--success)') + '">' + pctDelta(r.cur.criminal, r.yoy.criminal) + '</span></td>' +
+            '<td><span style="color:' + (r.cur.admin > r.yoy.admin ? 'var(--error)' : 'var(--success)') + '">' + pctDelta(r.cur.admin, r.yoy.admin) + '</span></td>' +
+            '<td><span style="color:' + (curT > yoyT ? 'var(--error)' : 'var(--success)') + '">' + pctDelta(curT, yoyT) + '</span></td>' +
+            
+            // 3. 环比 (%)
+            '<td><span style="color:' + (r.cur.criminal > r.prev.criminal ? 'var(--error)' : 'var(--success)') + '">' + pctDelta(r.cur.criminal, r.prev.criminal) + '</span></td>' +
+            '<td><span style="color:' + (r.cur.admin > r.prev.admin ? 'var(--error)' : 'var(--success)') + '">' + pctDelta(r.cur.admin, r.prev.admin) + '</span></td>' +
+            '<td><span style="color:' + (curT > prevT ? 'var(--error)' : 'var(--success)') + '">' + pctDelta(curT, prevT) + '</span></td>' +
+            
+            // 4. 占比
+            '<td>' + shareCr + '</td>' +
+            '<td>' + shareAd + '</td>' +
+            '<td style="color:var(--text-secondary);font-family:monospace;">' + ratioStr + '</td>' +
+            
+            // 5. 差值 (仅合计)
+            '<td style="font-weight:500;"><span style="color:' + (curT > yoyT ? 'var(--error)' : 'var(--success)') + '">' + numDelta(curT, yoyT) + '</span></td>' +
+            '<td style="font-weight:500;"><span style="color:' + (curT > prevT ? 'var(--error)' : 'var(--success)') + '">' + numDelta(curT, prevT) + '</span></td>' +
+            '</tr>';
+        });
+
+        // ------------------ 计算全省总计 ------------------
+        var sumC = { cr: 0, ad: 0 }, sumP = { cr: 0, ad: 0 }, sumY = { cr: 0, ad: 0 };
+        POLICE_CITY_ROWS.forEach(function (r) {
+          sumC.cr += r.cur.criminal; sumC.ad += r.cur.admin;
+          sumP.cr += r.prev.criminal; sumP.ad += r.prev.admin;
+          sumY.cr += r.yoy.criminal; sumY.ad += r.yoy.admin;
+        });
+        var sumCT = sumC.cr + sumC.ad, sumPT = sumP.cr + sumP.ad, sumYT = sumY.cr + sumY.ad;
+        
+        var totalShareCr = sumCT > 0 ? (sumC.cr / sumCT * 100).toFixed(1) : 0;
+        var totalShareAd = sumCT > 0 ? (sumC.ad / sumCT * 100).toFixed(1) : 0;
+        var totalRatioStr = sumC.cr + ':' + sumC.ad;
+
+        // 总计行输出
+        bodyHtml += '<tr class="total-row">' +
+          '<td style="text-align:left;"><b>全省汇总</b></td>' +
+          '<td>' + sumC.cr + '</td><td>' + sumC.ad + '</td><td>' + sumCT + '</td>' +
+          // 同比总计
+          '<td>' + pctDelta(sumC.cr, sumY.cr) + '</td><td>' + pctDelta(sumC.ad, sumY.ad) + '</td><td>' + pctDelta(sumCT, sumYT) + '</td>' +
+          // 环比总计
+          '<td>' + pctDelta(sumC.cr, sumP.cr) + '</td><td>' + pctDelta(sumC.ad, sumP.ad) + '</td><td>' + pctDelta(sumCT, sumPT) + '</td>' +
+          // 占比总计
+          '<td>' + totalShareCr + '</td><td>' + totalShareAd + '</td><td style="font-family:monospace;">' + totalRatioStr + '</td>' +
+          // 差值总计
+          '<td>' + numDelta(sumCT, sumYT) + '</td><td>' + numDelta(sumCT, sumPT) + '</td>' +
+          '</tr>';
+                  
+      } else if (repType === 'criminal' && sheet === 'crim-cat') {
+        wide = true;
+        headHtml = theadCriminalMonth(lc, '案件类别');
+        CRIM_CAT_ROWS.forEach(function (r) { bodyHtml += rowCriminalMomYoy('<td style="text-align:left;">' + r.label + '</td>', r); });
+        var totCat = sumCriminalTriple(CRIM_CAT_ROWS);
+        bodyHtml += rowCriminalMomYoy('<td style="text-align:left;"><b>合计</b></td>', totCat).replace('<tr>', '<tr class="total-row">');
+      } else if (repType === 'criminal' && sheet === 'crim-city') {
+        wide = true;
+        headHtml = theadCriminalMonth(lc, '地市');
+        CRIM_CITY_ROWS.forEach(function (r) { bodyHtml += rowCriminalMomYoy('<td style="text-align:left;">' + r.city + '</td>', r); });
+        var totCity = sumCriminalTriple(CRIM_CITY_ROWS);
+        bodyHtml += rowCriminalMomYoy('<td style="text-align:left;"><b>全省汇总</b></td>', totCity).replace('<tr>', '<tr class="total-row">');
+      } else if (repType === 'criminal' && sheet === 'crim-theft') {
+        wide = true;
+        var sel = document.getElementById('crimTheftClassFilter');
+        var cls = (sel && sel.value) ? sel.value : THEFT_CASE_CLASSES[0];
+        var theftRows = CRIM_THEFT_BY_CLASS[cls] || [];
+        headHtml = theadCriminalMonth(lc, '地市');
+        theftRows.forEach(function (r) { bodyHtml += rowCriminalMomYoy('<td style="text-align:left;">' + r.city + '</td>', r); });
+        var totTheft = sumCriminalTriple(theftRows);
+        bodyHtml += rowCriminalMomYoy('<td style="text-align:left;"><b>全省</b></td>', totTheft).replace('<tr>', '<tr class="total-row">');
+      } else if (repType === 'admin' && sheet === 'adm-city') {
+        wide = true;
+        headHtml = theadAdminMonth(lc, '地市');
+        ADMIN_CITY_ROWS.forEach(function (r) { bodyHtml += rowAdminMomYoy('<td style="text-align:left;font-weight:500;">' + r.city + '</td>', r); });
+        var totAdmCity = sumAdminTriple(ADMIN_CITY_ROWS);
+        bodyHtml += rowAdminMomYoy('<td style="text-align:left;"><b>全省汇总</b></td>', totAdmCity).replace('<tr>', '<tr class="total-row">');
+      } else if (repType === 'admin' && sheet === 'adm-cat') {
+        wide = true;
+        headHtml = theadAdminMonth(lc, '案件类别');
+        ADMIN_CAT_ROWS.forEach(function (r) { bodyHtml += rowAdminMomYoy('<td style="text-align:left;font-weight:500;">' + r.label + '</td>', r); });
+        var totAdmCat = sumAdminTriple(ADMIN_CAT_ROWS);
+        bodyHtml += rowAdminMomYoy('<td style="text-align:left;"><b>合计</b></td>', totAdmCat).replace('<tr>', '<tr class="total-row">');
+      }
+
+      tbl.className = wide ? 'stats-table stats-wide' : 'stats-table';
+      thead.innerHTML = headHtml;
+      tbody.innerHTML = bodyHtml;
+      updateTheftFilterBar();
+    }
+
+    document.getElementById('repType').addEventListener('change', function () {
+      syncStatsInnerTabs();
+      renderStatsTable();
+    });
+    
+    // 监听日期变化
+    document.getElementById('repStatsMonth').addEventListener('change', renderStatsTable);
+    document.getElementById('repDateStart').addEventListener('change', renderStatsTable);
+    document.getElementById('repDateEnd').addEventListener('change', renderStatsTable);
+    
+    document.getElementById('btnStatsRefresh').addEventListener('click', renderStatsTable);
+    document.getElementById('btnStatsGen').addEventListener('click', renderStatsTable);
+    // --- 报表管理核心逻辑更新结束 ---
+
+    (function initTheftClassFilter() {
+      var sel = document.getElementById('crimTheftClassFilter');
+      if (!sel || sel.options.length > 0) return;
+      THEFT_CASE_CLASSES.forEach(function (c) {
+        var o = document.createElement('option');
+        o.value = c;
+        o.textContent = c;
+        sel.appendChild(o);
+      });
+    })();
+    document.getElementById('crimTheftClassFilter').addEventListener('change', renderStatsTable);
+
+    document.querySelectorAll('.stats-inner-tabs').forEach(function (row) {
+      row.querySelectorAll('.tab').forEach(function (tab) {
+        tab.addEventListener('click', function () {
+          row.querySelectorAll('.tab').forEach(function (t) { t.classList.remove('active'); });
+          tab.classList.add('active');
+          var rep = row.getAttribute('data-reptype');
+          var key = tab.getAttribute('data-sheet');
+          if (rep === 'police-subtype') STATS_SHEET.police = key;
+          else if (rep === 'criminal') STATS_SHEET.criminal = key;
+          else STATS_SHEET.admin = key;
+          renderStatsTable();
+        });
+      });
+    });
+
+    syncStatsInnerTabs();
+    renderStatsTable();
+
+    function initChartsIfPresent() {
+      var trendEl = document.getElementById('trendChart');
+      if (!trendEl || typeof Chart === 'undefined') return;
+      var chartTextColor = 'rgba(255,255,255,0.55)';
+      var chartGridColor = 'rgba(255,255,255,0.08)';
+      new Chart(trendEl, {
+        type: 'line',
+        data: {
+          labels: ['3/19','3/20','3/21','3/22','3/23','3/24','3/25'],
+          datasets: [
+            { label: '刑事', data: [198,189,180,178,188,184,173], borderColor: '#722ed1', backgroundColor: 'rgba(114,46,209,.12)', fill: true, tension: .35, borderWidth: 2, pointRadius: 3 },
+            { label: '行政', data: [88,85,82,80,83,81,75], borderColor: '#13c2c2', backgroundColor: 'rgba(19,194,194,.12)', fill: true, tension: .35, borderWidth: 2, pointRadius: 3 }
+          ]
+        },
+        options: { plugins:{legend:{position:'top',labels:{boxWidth:12,padding:12,color:chartTextColor,font:{size:11}}}}, scales:{y:{grid:{color:chartGridColor},ticks:{color:chartTextColor}}, x:{grid:{display:false},ticks:{color:chartTextColor}}} }
+      });
+      var typeEl = document.getElementById('typeChart');
+      if (typeEl) new Chart(typeEl, {
+        type: 'doughnut',
+        data: {
+          labels: ['入户盗窃','盗窃车内物品','盗窃非机动车','盗窃商户','其他'],
+          datasets: [{ data: [72,54,46,38,38], backgroundColor: ['#1677ff','#4096ff','#69b1ff','#91caff','#d6e4ff'], borderWidth: 0 }]
+        },
+        options: { plugins:{legend:{position:'bottom', labels:{boxWidth:10,padding:12,color:chartTextColor,font:{size:11}}}}, cutout: '65%' }
+      });
+      var cityEl = document.getElementById('cityChart');
+      if (cityEl) new Chart(cityEl, {
+        type: 'bar',
+        data: {
+          labels: ['合肥','阜阳','芜湖','安庆','蚌埠','六安','宿州','宣城','滁州','亳州'],
+          datasets: [{ data: [36,28,24,22,20,18,17,16,15,14], backgroundColor: '#1677ff', borderRadius: 4 }]
+        },
+        options: { indexAxis: 'y', plugins:{legend:{display:false}}, scales:{x:{grid:{color:chartGridColor},ticks:{color:chartTextColor}}, y:{grid:{display:false},ticks:{color:chartTextColor}}} }
+      });
+      var hourEl = document.getElementById('hourChart');
+      if (hourEl) new Chart(hourEl, {
+        type: 'bar',
+        data: {
+          labels: ['0-2时','2-4时','4-6时','6-8时','8-10时','10-12时','12-14时','14-16时','16-18时','18-20时','20-22时','22-24时'],
+          datasets: [{ label: '发案数', data: [12,8,5,3,6,22,18,25,20,30,28,15], backgroundColor: function(ctx) {
+            var v = ctx.parsed.y;
+            if (v >= 25) return '#ff4d4f';
+            if (v >= 18) return '#fa8c16';
+            return '#1677ff';
+          }, borderRadius: 4 }]
+        },
+        options: { plugins:{legend:{display:false}}, scales:{y:{grid:{color:chartGridColor},ticks:{color:chartTextColor}}, x:{grid:{display:false},ticks:{color:chartTextColor}}} }
+      });
+    }
+    initChartsIfPresent();
+
+    (function initMapIfPresent() {
+      var map = document.getElementById('anhuiMap');
+      if (!map) return;
+      var cityDots = [
+        ['合肥',48,48,36],['芜湖',58,60,24],['蚌埠',54,36,20],['阜阳',35,44,28],['安庆',46,66,22],['六安',40,54,18],
+        ['滁州',62,46,15],['宿州',52,24,17],['亳州',38,26,14],['淮北',48,16,13],['淮南',52,32,12],['黄山',64,82,11],
+        ['铜陵',54,64,10],['马鞍山',66,58,9],['池州',56,74,8],['宣城',70,70,16]
+      ];
+      cityDots.forEach(function (tuple) {
+        var name = tuple[0], x = tuple[1], y = tuple[2], val = tuple[3];
+        var d = document.createElement('div');
+        var size = Math.max(8, Math.min(18, val / 2));
+        d.className = 'city-dot';
+        d.style.left = x + '%';
+        d.style.top = y + '%';
+        d.style.width = size + 'px';
+        d.style.height = size + 'px';
+        d.innerHTML = '<span>' + name + ' ' + val + '</span>';
+        map.appendChild(d);
+      });
+    })();
+
+    (function initCaseStolenItemsUI() {
+      var CATEGORIES = ['现金', '手机', '电脑', '首饰', '手表', '报表', '电动车', '自行车', '名贵字画', '古董', '个人证据'];
+      var state = {
+        detail: { selected: ['手机'], desc: '苹果 iPhone 16 Pro（银色）· 估值 ¥9,000' },
+        drawer: { selected: ['手机'], desc: '苹果 iPhone 16 Pro（银色）· 估值 ¥9,000' }
+      };
+
+      function renderCatTags(el, selected) {
+        if (!el) return;
+        if (!selected || !selected.length) {
+          el.innerHTML = '<span style="color:var(--text-secondary);">未选择</span>';
+          return;
+        }
+        var isDrawer = el.id && el.id.indexOf('drawer') !== -1;
+        el.innerHTML = selected.map(function (s) {
+          return isDrawer
+            ? '<span class="case-item-tag cit-blue">' + s + '</span>'
+            : '<span class="tag blue">' + s + '</span>';
+        }).join(' ');
+      }
+
+      function buildChecks(prefix) {
+        var box = document.getElementById('case-stolen-' + prefix + '-checks');
+        if (!box) return;
+        box.innerHTML = CATEGORIES.map(function (c) {
+          return '<label><input type="checkbox" value="' + c + '">' + c + '</label>';
+        }).join('');
+      }
+
+      function syncChecksFromState(prefix) {
+        var box = document.getElementById('case-stolen-' + prefix + '-checks');
+        if (!box) return;
+        var sel = state[prefix].selected;
+        box.querySelectorAll('input[type=checkbox]').forEach(function (inp) {
+          inp.checked = sel.indexOf(inp.value) >= 0;
+        });
+      }
+
+      function readChecks(prefix) {
+        var box = document.getElementById('case-stolen-' + prefix + '-checks');
+        if (!box) return [];
+        var out = [];
+        box.querySelectorAll('input[type=checkbox]:checked').forEach(function (inp) {
+          out.push(inp.value);
+        });
+        return out;
+      }
+
+      window.toggleCaseStolenEdit = function (prefix) {
+        var v = document.getElementById('case-stolen-' + prefix + '-view');
+        var e = document.getElementById('case-stolen-' + prefix + '-edit');
+        if (!v || !e) return;
+        syncChecksFromState(prefix);
+        var ta = document.getElementById('case-stolen-' + prefix + '-textarea');
+        if (ta) ta.value = state[prefix].desc;
+        e.style.display = 'block';
+        v.style.display = 'none';
+      };
+
+      window.cancelCaseStolenEdit = function (prefix) {
+        var v = document.getElementById('case-stolen-' + prefix + '-view');
+        var e = document.getElementById('case-stolen-' + prefix + '-edit');
+        if (v) v.style.display = '';
+        if (e) e.style.display = 'none';
+      };
+
+      window.saveCaseStolenEdit = function (prefix) {
+        state[prefix].selected = readChecks(prefix);
+        var ta = document.getElementById('case-stolen-' + prefix + '-textarea');
+        state[prefix].desc = ta ? ta.value : '';
+        renderCatTags(document.getElementById('case-stolen-' + prefix + '-cats'), state[prefix].selected);
+        var descEl = document.getElementById('case-stolen-' + prefix + '-desc');
+        if (descEl) descEl.textContent = state[prefix].desc;
+        cancelCaseStolenEdit(prefix);
+      };
+
+      buildChecks('detail');
+      buildChecks('drawer');
+      renderCatTags(document.getElementById('case-stolen-detail-cats'), state.detail.selected);
+      renderCatTags(document.getElementById('case-stolen-drawer-cats'), state.drawer.selected);
+      var d1 = document.getElementById('case-stolen-detail-desc');
+      var d2 = document.getElementById('case-stolen-drawer-desc');
+      if (d1) d1.textContent = state.detail.desc;
+      if (d2) d2.textContent = state.drawer.desc;
+    })();
+  </script>
+</body>
+</html>
