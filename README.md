@@ -1,2 +1,6 @@
-# police-ai-prototype
-[Portfolio] This link connects to the high-fidelity PM prototype I designed. Integrating Gen-AI &amp; big data, it covers "Network Supervision" (Analysis &amp; Data modules) and "Property Crime Assistant". Built via AI tools, it simulates workflows like element extraction and data orchestration. Paste to explore dashboards &amp; interactions.
+【产品作品集】省级公安大模型构建项目高保真交互原型系统
+
+本链接为本人在实习期间，规划与迭代的省级公安大模型项目交互原型。系统深度融合了AI大模型与大数据分析技术，涵盖“网络督察平台-综合分析研判、督察数据应用（两个核心模块）”与“侵财案件助手”两大业务线。本原型由本人利用AI工具与MasterGo/HTML敏捷构建，高保真还原了民警一线办案中“警情案情要素自动提取、综合研判分析、数据全闭环流转”等真实业务场景。欢迎复制链接至浏览器，在线体验系统的底层数据流转逻辑、可视化看板设计及动态交互闭环。
+[Product Portfolio] High-Fidelity Interactive Prototype System for Provincial Public Security Large-Scale Model Construction Project
+
+This link leads to an interactive prototype of a provincial public security large-scale model project that I planned and iterated during my internship. The system deeply integrates AI large-scale modeling and big data analytics technologies, covering two main business lines: "Network Supervision Platform - Comprehensive Analysis and Judgment, Supervision Data Application (two core modules)" and "Property Crime Case Assistant." This prototype was built agilely using AI tools and MasterGo/HTML, faithfully recreating real-world business scenarios encountered by police officers in frontline case handling, including "automatic extraction of case elements, comprehensive analysis and judgment, and closed-loop data flow." Feel free to copy the link to your browser to experience the system's underlying data flow logic, visual dashboard design, and dynamic interactive loop online.
