@@ -1,27 +1,162 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>产品作品集 | 大模型构建项目原型</title>
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; padding-top: 50px; background-color: #f4f6f9; }
-        .card { background: white; padding: 20px; margin: 20px auto; width: 400px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        a { display: inline-block; padding: 10px 20px; background-color: #007bff; color: white; text-decoration: none; border-radius: 4px; margin-top: 10px; }
+        /* 全局样式定义 */
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; 
+            text-align: center; 
+            padding: 40px 20px; 
+            background-color: #f4f6f9; 
+            margin: 0;
+            color: #333;
+        }
+        h2 {
+            color: #1a2a40;
+            margin-bottom: 10px;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        
+        /* 响应式卡片容器 */
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .card { 
+            background: white; 
+            padding: 24px; 
+            width: 100%;
+            max-width: 420px; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 12px rgba(26, 42, 64, 0.08); 
+            box-sizing: border-box;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(26, 42, 64, 0.15);
+        }
+        
+        .card h3 {
+            color: #0056b3;
+            margin-top: 0;
+            font-size: 20px;
+        }
+        .card p {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+        
+        /* 按钮美化 */
+        a { 
+            display: block; 
+            padding: 12px 20px; 
+            background-color: #007bff; 
+            color: white; 
+            text-decoration: none; 
+            border-radius: 6px; 
+            margin: 8px 0; 
+            font-size: 15px;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
         a:hover { background-color: #0056b3; }
+        
+        /* 🚨 手机端专属：顶部通知栏提示（默认在电脑端隐藏） */
+        #mobile-notice {
+            display: none; /* 默认隐藏 */
+            background-color: #fff3cd;
+            border: 1px solid #ffeeba;
+            color: #856404;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 0 auto 25px auto;
+            max-width: 420px;
+            text-align: left;
+            font-size: 13px;
+            line-height: 1.6;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        #mobile-notice strong {
+            color: #533f03;
+            display: block;
+            margin-bottom: 4px;
+            font-size: 14px;
+        }
+
+        /* 🖥️ 电脑大屏排版自适应优化 */
+        @media (min-width: 768px) {
+            body { padding-top: 60px; }
+            .container {
+                flex-direction: row;
+                justify-content: center;
+                align-items: stretch;
+            }
+            .card {
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+            }
+        }
     </style>
 </head>
 <body>
+
+    <div id="mobile-notice">
+        <strong>💡 移动端全景体验提示：</strong>
+        由于内层后台原型为 <b>PC端大屏业务系统</b>，手机直接浏览会因分辨率受限导致排版错位。
+        <br><b>最佳体验方式：</b>请点击浏览器菜单，选择 <b>“请求桌面网站”</b> 或 <b>“电脑版网站”</b>，即可获得完美动态交互体验。
+    </div>
+
     <h2>产品原型作品集</h2>
-    <div class="card">
-        <h3>省级公安大模型构建项目一</h3>
-        <p>省级网上督察平台升级改造</p>
-        <a href="./网络督察平台-综合分析研判平台.html" target="_blank">进入 综合分析研判平台</a><br><br>
-        <a href="./网络督察平台-督查数据应用管理模块V1.0.html" target="_blank">进入 督查数据应用管理模块</a>
+    <div class="subtitle">吴翊伟 | 省级公安大模型构建项目高保真交互系统</div>
+    
+    <div class="container">
+        <div class="card">
+            <div>
+                <h3>省级公安大模型构建项目一</h3>
+                <p>省级网上督察平台升级改造</p>
+            </div>
+            <div>
+                <a href="./网络督察平台-综合分析研判平台.html" target="_blank">进入 综合分析研判平台</a>
+                <a href="./网络督察平台-督查数据应用管理模块V1.0.html" target="_blank">进入 督查数据应用管理模块</a>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div>
+                <h3>省级公安大模型构建项目二</h3>
+                <p>“侵财案件助手”系统研发</p>
+            </div>
+            <div>
+                <a href="./侵财助手设计稿- V1.0.1.html" target="_blank">进入 侵财案件助手系统</a>
+            </div>
+        </div>
     </div>
-    <div class="card">
-        <h3>省级公安大模型构建项目二</h3>
-        <p>“侵财案件助手”系统研发</p>
-        <a href="./侵财助手设计稿- V1.0.1.html" target="_blank">进入 侵财案件助手系统</a>
-    </div>
+
+    <script>
+        function detectMobile() {
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            if (isMobile) {
+                document.getElementById('mobile-notice').style.display = 'block';
+            }
+        }
+        window.onload = detectMobile;
+    </script>
 </body>
 </html>
